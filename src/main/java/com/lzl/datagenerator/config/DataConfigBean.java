@@ -37,7 +37,7 @@ public class DataConfigBean {
                     ColumnConfig clone = ObjectUtil.clone(columnConfig);
                     clone.setColName(col);
                     clone.setDataSourceId(dataSourceId);
-                    map.put(col, columnConfig);
+                    map.put(col, clone);
                     return map.entrySet().stream();
                 });
             }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

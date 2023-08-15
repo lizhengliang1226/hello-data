@@ -8,7 +8,7 @@ datasourceGroupList:
       - a:50000
   - dataSourceId: cur
     columnConfig:
-      - colName: STK_CODE
+      - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG
         strategy: default
       - colName: ABN_REASON
         strategy: dict-value
@@ -45,8 +45,22 @@ datasourceGroupList:
       - colName: CUST_CODE
         strategy: auto-inc
         baseValue: 1200000000
+      - colName: CHANNELS
+        strategy: dict-value
+        dictColName: CHANNEL
+      - colName: CUACCT_LVLS
+        strategy: dict-value
+        dictColName: CUACCT_LVL
+      - colName: CUACCT_CLSES
+        strategy: dict-value
+        dictColName: CUACCT_CLS
+      - colName: CUACCT_GRPS
+        strategy: dict-value
+        dictColName: CUACCT_GRP
     tableConfig:
-      - CUST_SETT:200000
+      - BRANCH_ORG_CFG:1000
+      - FEE_TEMPLATE_DEFINE:1000
+      - CUST_SETT:200000:0
       - OPT_INFO:100000:0
       - STKCLS_STDFEE_RATE:100000:0
       - OPT_CLOSE_PRICE:100000:0
@@ -66,6 +80,8 @@ datasourceGroupList:
       MARKET: 1
       BOARD: 15
       SUB_CUACCT_CODE: 0
+      FEE_TEMPLATE_NAME: 费用模板
+      FEE_TEMPLATE_DESC: 费用模板描述
   - dataSourceId: his
     columnConfig:
       - colName: STK_CODE
