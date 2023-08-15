@@ -57,6 +57,14 @@ datasourceGroupList:
       - colName: CUACCT_GRPS
         strategy: dict-value
         dictColName: CUACCT_GRP
+      - colName: FEE_TEMPLATE_NAME
+        strategy: auto-inc
+        baseValue: 0
+        prefix: 模板名称
+      - colName: FEE_TEMPLATE_DESC
+        strategy: auto-inc
+        baseValue: 0
+        prefix: 模板描述
     tableConfig:
       - BRANCH_ORG_CFG:1000
       - FEE_TEMPLATE_DEFINE:1000
@@ -80,8 +88,6 @@ datasourceGroupList:
       MARKET: 1
       BOARD: 15
       SUB_CUACCT_CODE: 0
-      FEE_TEMPLATE_NAME: 费用模板
-      FEE_TEMPLATE_DESC: 费用模板描述
   - dataSourceId: his
     columnConfig:
       - colName: STK_CODE

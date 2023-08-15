@@ -21,4 +21,6 @@ public class ColumnConfig implements Serializable {
     private String queryCol;
     private String dictColName;
     private String dataSourceId;
+    private String prefix;
+    private String suffix;
 }

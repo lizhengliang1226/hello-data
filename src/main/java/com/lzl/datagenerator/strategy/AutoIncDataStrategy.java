@@ -13,9 +13,12 @@ import java.util.concurrent.atomic.AtomicLong;
 @ToString
 public class AutoIncDataStrategy implements DataStrategy {
     private final AtomicLong baseVal;
+    private final String prefix;
+    private final String suffix;
+
     @Override
     public Object getNextVal() {
-        return baseVal.getAndIncrement();
+        return String.format("%s%s%s", prefix == null ? "" : prefix, baseVal.getAndIncrement(), suffix == null ? "" : suffix);
     }
 
     @Override
@@ -24,6 +27,8 @@ public class AutoIncDataStrategy implements DataStrategy {
     }
 
     public AutoIncDataStrategy(ColumnConfig columnConfig) {
-        this.baseVal =new AtomicLong(columnConfig.getBaseValue().longValue());
+        this.baseVal = new AtomicLong(columnConfig.getBaseValue().longValue());
+        this.prefix = columnConfig.getPrefix();
+        this.suffix = columnConfig.getSuffix();
     }
 }
