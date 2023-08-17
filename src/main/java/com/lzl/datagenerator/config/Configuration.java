@@ -10,7 +10,7 @@ import java.util.List;
  *
  * @author LZL
  * @version v1.0
- * @date 2023/8/4-21:18
+ * @since 2023/8/4-21:18
  */
 @Data
 public class Configuration {
@@ -27,7 +27,7 @@ public class Configuration {
                     CONFIGURATION = YamlUtil.loadByPath("classpath:/config/generate.yml", Configuration.class);
                     CONFIGURATION.getDatasourceGroupList()
                                  .parallelStream()
-                                 .filter(config -> CONFIGURATION.getGenerate().equals("ALL") || CONFIGURATION.getGenerate()
+                                 .filter(config -> "ALL".equals(CONFIGURATION.getGenerate()) || CONFIGURATION.getGenerate()
                                                                                                              .contains(config.getDataSourceId()))
                                  .forEach(DataConfigBean::init);
                 }

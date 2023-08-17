@@ -127,6 +127,7 @@ datasourceGroupList:
       FEE_MAX: 100
       FEE_MIN: 0
       FEE_RATE: 1
+    ignoreCol: PARTITION_FIELD
   - dataSourceId: his
     columnConfig:
       - colName: STK_CODE

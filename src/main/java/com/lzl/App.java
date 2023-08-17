@@ -5,6 +5,7 @@ import com.lzl.datagenerator.config.Configuration;
 
 /**
  * Hello world!
+ * @author lzl1226
  */
 public class App {
     public static void main(String[] args) {

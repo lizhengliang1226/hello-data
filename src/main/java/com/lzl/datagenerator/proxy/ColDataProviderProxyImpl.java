@@ -9,7 +9,7 @@ import java.lang.reflect.Method;
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 @Data
 public class ColDataProviderProxyImpl implements InvocationHandler {
@@ -28,21 +28,13 @@ public class ColDataProviderProxyImpl implements InvocationHandler {
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) {
         String name = method.getName();
-        switch (name) {
-            case "getName" -> {
-                return colName;
-            }
-            case "getNextVal" -> {
-                return strategy.getNextVal();
-            }
-            case "toString" -> {
-                return toString();
-            }
-            default -> {
-                throw new RuntimeException(String.format("没有方法%s的代理实现", name));
-            }
-        }
+        return switch (name) {
+            case "getName" -> colName;
+            case "getNextVal" -> strategy.getNextVal();
+            case "toString" -> toString();
+            default -> throw new RuntimeException(String.format("没有方法%s的代理实现", name));
+        };
     }
 }

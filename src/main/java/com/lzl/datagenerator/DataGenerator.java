@@ -31,22 +31,22 @@ import java.util.stream.Stream;
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 public class DataGenerator {
+    private static final int TABLE_CONFIG_LENGTH_2 = 2;
+    public static final int INDEX_2 = 2;
     private final Configuration configuration;
+    private static final String DEL_TABLE_TMPL = "TRUNCATE TABLE %s";
 
     public DataGenerator(Configuration configuration) {
         this.configuration = configuration;
     }
 
     public void generate() {
-        configuration.getDatasourceGroupList()
-                     .parallelStream()
+        configuration.getDatasourceGroupList().parallelStream()
                      .filter(config -> "ALL".equals(configuration.getGenerate()) || configuration.getGenerate().contains(config.getDataSourceId()))
-                     .forEach(dataConfigBean -> dataConfigBean.getTableConfig()
-                                                              .parallelStream()
-                                                              .filter(this::checkTableConfig)
+                     .forEach(dataConfigBean -> dataConfigBean.getTableConfig().parallelStream().filter(this::checkTableConfig)
                                                               .map(tableConfig -> generateDataList(tableConfig, dataConfigBean))
                                                               .forEach(dataPair -> saveData(dataConfigBean, dataPair)));
 
@@ -56,7 +56,6 @@ public class DataGenerator {
         if (CollectionUtil.isNotEmpty(dataPair.getValue())) {
             Log.get().info("开始删除表{}数据.", dataPair.getKey());
             try {
-                String DEL_TABLE_TMPL = "TRUNCATE TABLE %s";
                 Db.use(dataConfigBean.getDataSourceId()).execute(String.format(DEL_TABLE_TMPL, dataPair.getKey()));
             } catch (SQLException e) {
                 Log.get().error("删除表[{}]数据失败", dataPair.getKey());
@@ -67,7 +66,7 @@ public class DataGenerator {
                 try {
                     Db.use(dataConfigBean.getDataSourceId()).insert(list);
                 } catch (SQLException e) {
-                    Log.get().error("保存表[{}]数据失败，原因[{}]", dataPair.getKey(),e.getMessage());
+                    Log.get().error("保存表[{}]数据失败，原因[{}]", dataPair.getKey(), e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
@@ -88,7 +87,7 @@ public class DataGenerator {
             Log.get().error("表{}未配置生成数据量", s[0]);
             throw new RuntimeException();
         }
-        if (s.length == 2) {
+        if (s.length == TABLE_CONFIG_LENGTH_2) {
             try {
                 long l = Long.parseLong(s[1]);
             } catch (Exception e) {
@@ -98,7 +97,7 @@ public class DataGenerator {
             return true;
         }
         String notGen = "0";
-        if (!notGen.equals(s[2])) {
+        if (!notGen.equals(s[INDEX_2])) {
             Log.get().warn("表{}配置了不生成数据标志，但是配置项不合法(只能为0)，将默认生成该表数据", s[0]);
             return true;
         } else {
@@ -113,11 +112,8 @@ public class DataGenerator {
      * @return 主键和唯一索引列集合
      */
     private Set<String> getUniqueIndexCol(Table tableInfo) {
-        return Stream.concat(tableInfo.getIndexInfoList()
-                                      .parallelStream()
-                                      .filter(index -> !index.isNonUnique())
-                                      .flatMap(index -> index.getColumnIndexInfoList().parallelStream())
-                                      .map(ColumnIndexInfo::getColumnName)
+        return Stream.concat(tableInfo.getIndexInfoList().parallelStream().filter(index -> !index.isNonUnique())
+                                      .flatMap(index -> index.getColumnIndexInfoList().parallelStream()).map(ColumnIndexInfo::getColumnName)
                                       .collect(Collectors.toSet()).parallelStream(), tableInfo.getPkNames().parallelStream())
                      .collect(Collectors.toSet());
     }
@@ -135,9 +131,7 @@ public class DataGenerator {
         createTableColDataProvider(tableCode, tableInfo.getColumns(), dataConfig.getColumnConfigMap());
         // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
         Set<String> uniqueIndexColAndPkSet = getUniqueIndexCol(tableInfo);
-        List<Entity> res = LongStream.range(0L, Long.parseLong(split[1]))
-                                     .parallel()
-                                     .mapToObj(index -> Entity.create(tableCode))
+        List<Entity> res = LongStream.range(0L, Long.parseLong(split[1])).parallel().mapToObj(index -> Entity.create(tableCode))
                                      .peek(e -> tableInfo.getColumns()
                                                          .forEach(column -> setColumnValue(dataConfig, tableCode, uniqueIndexColAndPkSet, e, column)))
                                      .toList();
@@ -145,7 +139,7 @@ public class DataGenerator {
     }
 
     private void setColumnValue(DataConfigBean dataConfig, String tableCode, Set<String> uniqueIndexColAndPkSet, Entity entity, Column column) {
-        if ("PARTITION_FIELD".equals(column.getName())) {
+        if (dataConfig.getIgnoreCol().contains(column.getName())) {
             return;
         }
         // 类型
@@ -167,10 +161,8 @@ public class DataGenerator {
         }
         // 根据优先级取值
         // 生成器 > 字段默认值 > 字典值 > 类型默认值
-        entity.set(colName, nextVal == null ?
-                colDefaultVal == null ?
-                        dictDefaultVal == null ?
-                                typeDefaultVal : dictDefaultVal : colDefaultVal : nextVal);
+        entity.set(colName,
+                   nextVal == null ? colDefaultVal == null ? dictDefaultVal == null ? typeDefaultVal : dictDefaultVal : colDefaultVal : nextVal);
     }
 
     private static final Integer DEFAULT_VAL = 0;
@@ -252,13 +244,9 @@ public class DataGenerator {
      * @param columnConfigMap 表的列配置信息
      */
     public void createTableColDataProvider(String tableCode, Collection<Column> columns, Map<String, ColumnConfig> columnConfigMap) {
-        Map<String, ColDataProvider> colDataProviderMap = columns.parallelStream()
-                                                                 .filter(
-                                                                         column -> columnConfigMap.containsKey(column.getName()))
-                                                                 .map(
-                                                                         column -> createColDataProvider(columnConfigMap.get(column.getName())))
-                                                                 .collect(Collectors.toMap(ColDataProvider::getName,
-                                                                                           colDataProvider -> colDataProvider));
+        Map<String, ColDataProvider> colDataProviderMap = columns.parallelStream().filter(column -> columnConfigMap.containsKey(column.getName()))
+                                                                 .map(column -> createColDataProvider(columnConfigMap.get(column.getName()))).collect(
+                        Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
         tableColDataProviderMap.put(tableCode, colDataProviderMap);
     }
 
@@ -269,10 +257,7 @@ public class DataGenerator {
      * @return 列数据生成器
      */
     private ColDataProvider createColDataProvider(ColumnConfig columnConfig) {
-        return getColDataProxy(columnConfig.getColName(),
-                               DataStrategyFactory.createDataStrategy(
-                                       columnConfig.getStrategy(),
-                                       columnConfig));
+        return getColDataProxy(columnConfig.getColName(), DataStrategyFactory.createDataStrategy(columnConfig.getStrategy(), columnConfig));
 
     }
 }

@@ -30,7 +30,7 @@ public class DataConfigBean {
     private Map<String, String> colDefaultValue =new HashMap<>(16);
     private volatile static DataConfigBean DATA_CONFIG_BEAN;
     private Map<String, ColumnConfig> columnConfigMap=new HashMap<>(16);
-
+    private String ignoreCol;
     private void transColumnConfig() {
         if (CollectionUtil.isNotEmpty(columnConfig)) {
             try {
