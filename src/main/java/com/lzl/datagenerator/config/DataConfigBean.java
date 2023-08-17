@@ -1,8 +1,10 @@
 package com.lzl.datagenerator.config;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.db.Db;
+import cn.hutool.log.Log;
 import lombok.Data;
 
 import java.sql.SQLException;
@@ -11,11 +13,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 @Data
 public class DataConfigBean {
@@ -30,17 +33,24 @@ public class DataConfigBean {
 
     private void transColumnConfig() {
         if (CollectionUtil.isNotEmpty(columnConfig)) {
-            columnConfigMap = columnConfig.parallelStream().flatMap(columnConfig -> {
-                String colName = columnConfig.getColName();
-                return Arrays.stream(colName.split(",")).flatMap(col -> {
-                    Map<String, ColumnConfig> map = new HashMap<>();
-                    ColumnConfig clone = ObjectUtil.clone(columnConfig);
-                    clone.setColName(col);
-                    clone.setDataSourceId(dataSourceId);
-                    map.put(col, clone);
-                    return map.entrySet().stream();
-                });
-            }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            try {
+                columnConfigMap = columnConfig.parallelStream().flatMap(columnConfig -> {
+                    String colName = columnConfig.getColName();
+                    return Arrays.stream(colName.split(",")).flatMap(col -> {
+                        ColumnConfig clone = ObjectUtil.clone(columnConfig);
+                        clone.setColName(col);
+                        clone.setDataSourceId(dataSourceId);
+                        return Stream.of(Pair.of(col, clone));
+                    });
+                }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+            }catch (IllegalStateException e){
+                Log.get().error("数据源{}的某个列策略配置了多条，列配置策略必须唯一，请根据异常信息检查列配置！",dataSourceId,e.getMessage());
+                throw e;
+            }catch (Exception e){
+                Log.get().error("转换数据源{}的列配置出现了异常，异常信息：{}",dataSourceId,e.getMessage());
+                throw e;
+            }
+
         }
 
     }

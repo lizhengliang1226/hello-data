@@ -8,15 +8,13 @@ datasourceGroupList:
       - a:50000
   - dataSourceId: cur
     columnConfig:
-      - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG
+      - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG,FEE_CFG_SN,FEE_CFG_ID,FEE_TEMPLATE_CFG_SN,ORIGIN_TMPL_SN
         strategy: default
       - colName: ABN_REASON
         strategy: dict-value
       - colName: OPT_NUM
         strategy: auto-inc
         baseValue: 600000
-      - colName: FEE_CFG_SN
-        strategy: default
       - colName: CUACCT_CODE
         strategy: auto-inc
         baseValue: 2200000000
@@ -45,7 +43,7 @@ datasourceGroupList:
       - colName: CUST_CODE
         strategy: auto-inc
         baseValue: 1200000000
-      - colName: CHANNELS
+      - colName: CHANNELES
         strategy: dict-value
         dictColName: CHANNEL
       - colName: CUACCT_LVLS
@@ -65,9 +63,44 @@ datasourceGroupList:
         strategy: auto-inc
         baseValue: 0
         prefix: 模板描述
+      - colName: FEE_ID
+        strategy: rand-table-ele
+        querySql: "select FEE_ID from FEE_DEFINE"
+        queryCol: FEE_ID
+#      - colName: FEE_CAL_AMT
+#        strategy: auto-inc
+#        querySql: "select FEE_ID from FEE_DEFINE"
+#        queryCol: FEE_ID
+      - colName: STK_CLSES
+        strategy: dict-value
+        dictColName: STK_CLS
+      - colName: BIZ_CODES
+        strategy: dict-value
+        dictColName: BIZ_CODE
+      - colName: COMMISION_MODE
+        strategy: rand-ele
+        randomEle: ["0","1","2"]
+      - colName: TMPL_ORIGIN
+        strategy: rand-ele
+        randomEle: ["0","1","2","3"]
+      - colName: CHARGE_TYPE
+        strategy: rand-ele
+        randomEle: ["0","1"]
     tableConfig:
+      # 佣金模板配置
+      - COMM_TEMPLATE:1000
+      # 机构配置
       - BRANCH_ORG_CFG:1000
+      # 资金账号配置
+      - CUACCT_FEE_CFG:1000
+      # 费用模板声明
       - FEE_TEMPLATE_DEFINE:1000
+      # 按证券类别的费用配置
+      - STKCLS_STDFEE_RATE:1000
+      # 按证券代码的费用配置
+      - STKCODE_STDFEE_RATE:1000
+      # 分段配置
+      - SUB_CAL_CFG:1000
       - CUST_SETT:200000:0
       - OPT_INFO:100000:0
       - STKCLS_STDFEE_RATE:100000:0
@@ -83,11 +116,17 @@ datasourceGroupList:
       dictItemColName: DICT_ITEM
     loadDictCache: true
     colDefaultValue:
+      MAX_FEE: 500
+      MIN_FEE: 0
       SETT_DATE: 20230404
       TRD_DATE: 20230404
       MARKET: 1
       BOARD: 15
       SUB_CUACCT_CODE: 0
+      FEE_CAL_AMT: 100
+      FEE_MAX: 100
+      FEE_MIN: 0
+      FEE_RATE: 1
   - dataSourceId: his
     columnConfig:
       - colName: STK_CODE
