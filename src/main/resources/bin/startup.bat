@@ -2,6 +2,7 @@
 
 setlocal
 echo ------------------------Hello Data Boot------------------------
+cd /d %~dp0
 cd ..\
 
 set "CURRENT_DIR=%cd%"
