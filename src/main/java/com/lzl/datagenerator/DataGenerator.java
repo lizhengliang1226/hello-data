@@ -6,14 +6,11 @@ import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.db.Db;
 import cn.hutool.db.Entity;
-import cn.hutool.db.ds.DSFactory;
-import cn.hutool.db.meta.*;
+import cn.hutool.db.meta.Column;
+import cn.hutool.db.meta.JdbcType;
 import cn.hutool.log.Log;
 import com.google.common.collect.Lists;
-import com.lzl.datagenerator.config.CacheManager;
-import com.lzl.datagenerator.config.ColumnConfig;
-import com.lzl.datagenerator.config.Configuration;
-import com.lzl.datagenerator.config.DataConfigBean;
+import com.lzl.datagenerator.config.*;
 import com.lzl.datagenerator.proxy.ColDataProvider;
 import com.lzl.datagenerator.proxy.ColDataProviderProxyImpl;
 import com.lzl.datagenerator.strategy.DataStrategy;
@@ -25,7 +22,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 
 /**
@@ -34,88 +30,77 @@ import java.util.stream.Stream;
  * @since 2023/7/31-22:24
  */
 public class DataGenerator {
-    private static final int TABLE_CONFIG_LENGTH_2 = 2;
-    public static final int INDEX_2 = 2;
     private final Configuration configuration;
     private static final String DEL_TABLE_TMPL = "TRUNCATE TABLE %s";
+    private static final Map<JdbcType, Object> TYPE_DEFAULT_VAL_MAP = new HashMap<>() {{
+        put(JdbcType.VARCHAR, "1");
+        put(JdbcType.CHAR, "1");
+        put(JdbcType.NUMERIC, 1);
+        put(JdbcType.TIMESTAMP, LocalDateTime.now());
+        put(JdbcType.INTEGER, 1);
+        put(JdbcType.BIGINT, 1);
+        put(JdbcType.SMALLINT, 1);
+    }};
+    private final Map<String, Map<String, ColDataProvider>> tableColDataProviderMap = new ConcurrentHashMap<>(16);
 
     public DataGenerator(Configuration configuration) {
         this.configuration = configuration;
     }
 
     public void generate() {
-        configuration.getDatasourceGroupList().parallelStream()
+        configuration.getDataConfigList()
+                     .parallelStream()
                      .filter(config -> "ALL".equals(configuration.getGenerate()) || configuration.getGenerate().contains(config.getDataSourceId()))
-                     .forEach(dataConfigBean -> dataConfigBean.getTableConfig().parallelStream().filter(this::checkTableConfig)
+                     .forEach(dataConfigBean -> dataConfigBean.getTableConfigMap()
+                                                              .values()
+                                                              .parallelStream()
                                                               .map(tableConfig -> generateDataList(tableConfig, dataConfigBean))
                                                               .forEach(dataPair -> saveData(dataConfigBean, dataPair)));
 
     }
 
     private void saveData(DataConfigBean dataConfigBean, Pair<String, List<Entity>> dataPair) {
-        if (CollectionUtil.isNotEmpty(dataPair.getValue())) {
-            Log.get().info("开始删除表{}数据.", dataPair.getKey());
+        List<Entity> dataList = dataPair.getValue();
+        String tableName = dataPair.getKey();
+        TableConfig tableConfig = dataConfigBean.getTableConfigMap().get(tableName);
+        Set<String> pkInfo = tableConfig.getPkInfo();
+        if (CollectionUtil.isNotEmpty(dataList)) {
+            Log.get().info("开始删除表{}数据.", tableName);
             try {
-                Db.use(dataConfigBean.getDataSourceId()).execute(String.format(DEL_TABLE_TMPL, dataPair.getKey()));
+                List<String> deleteSqlList = generateDeleteSqlList(dataList, tableName, pkInfo);
+                Db.use(dataConfigBean.getDataSourceId()).executeBatch(deleteSqlList);
             } catch (SQLException e) {
-                Log.get().error("删除表[{}]数据失败", dataPair.getKey());
+                Log.get().error("删除表[{}]数据失败", tableName);
                 throw new RuntimeException(e);
             }
-            Log.get().info("开始保存表{}数据，预计保存数据{}条.", dataPair.getKey(), dataPair.getValue().size());
-            Lists.partition(dataPair.getValue(), 5000).parallelStream().forEach(list -> {
+            Log.get().info("开始保存表{}数据，预计保存数据{}条.", tableName, dataList.size());
+            Lists.partition(dataList, 5000).parallelStream().forEach(list -> {
                 try {
                     Db.use(dataConfigBean.getDataSourceId()).insert(list);
                 } catch (SQLException e) {
-                    Log.get().error("保存表[{}]数据失败，原因[{}]", dataPair.getKey(), e.getMessage());
+                    Log.get().error("保存表[{}]数据失败，原因[{}]", tableName, e.getMessage());
                     throw new RuntimeException(e);
                 }
             });
         } else {
-            Log.get().info("表{}生成的数据量为0，不生成数据", dataPair.getKey());
+            Log.get().info("表{}生成的数据量为0，不生成数据", tableName);
         }
     }
 
-    /**
-     * 检查表配置
-     *
-     * @param tableConfig 表配置
-     * @return true 如果配置正确
-     */
-    private boolean checkTableConfig(String tableConfig) {
-        String[] s = tableConfig.trim().split(":");
-        if (s.length == 1) {
-            Log.get().error("表{}未配置生成数据量", s[0]);
-            throw new RuntimeException();
-        }
-        if (s.length == TABLE_CONFIG_LENGTH_2) {
-            try {
-                long l = Long.parseLong(s[1]);
-            } catch (Exception e) {
-                Log.get().error("表{}生成数据量配置错误，{}不是一个合法的数字", s[0], s[1]);
-                throw new RuntimeException();
-            }
-            return true;
-        }
-        String notGen = "0";
-        if (!notGen.equals(s[INDEX_2])) {
-            Log.get().warn("表{}配置了不生成数据标志，但是配置项不合法(只能为0)，将默认生成该表数据", s[0]);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * 根据表的元数据信息获取表的唯一索引和主键的列集合
-     *
-     * @param tableInfo 表的元数据信息
-     * @return 主键和唯一索引列集合
-     */
-    private Set<String> getUniqueIndexCol(Table tableInfo) {
-        return Stream.concat(tableInfo.getIndexInfoList().parallelStream().filter(index -> !index.isNonUnique())
-                                      .flatMap(index -> index.getColumnIndexInfoList().parallelStream()).map(ColumnIndexInfo::getColumnName)
-                                      .collect(Collectors.toSet()).parallelStream(), tableInfo.getPkNames().parallelStream())
-                     .collect(Collectors.toSet());
+    private List<String> generateDeleteSqlList(List<Entity> dataList, String tableName, Set<String> pkInfo) {
+        return Lists.partition(dataList, 10)
+                    .parallelStream()
+                    .map(list -> list.parallelStream()
+                                     .flatMap(data -> pkInfo.parallelStream().map(pk -> Pair.of(pk, data.get(pk))).toList().stream())
+                                     .collect(Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList())))
+                                     .entrySet()
+                                     .parallelStream()
+                                     .map(pkDataMap -> pkDataMap.getValue()
+                                                          .parallelStream()
+                                                          .map(String::valueOf)
+                                                          .collect(Collectors.joining(",", pkDataMap.getKey() + " in (", ")")))
+                                     .collect(Collectors.joining(" and ", "delete from " + tableName + " where ", "")))
+                    .toList();
     }
 
     /**
@@ -124,16 +109,16 @@ public class DataGenerator {
      * @param dataConfig 数据源id
      * @return 生成的数据集合
      */
-    private Pair<String, List<Entity>> generateDataList(String tableConfig, DataConfigBean dataConfig) {
-        String[] split = tableConfig.split(":");
-        String tableCode = split[0];
-        Table tableInfo = MetaUtil.getTableMeta(DSFactory.get(dataConfig.getDataSourceId()), tableCode);
-        createTableColDataProvider(tableCode, tableInfo.getColumns(), dataConfig.getColumnConfigMap());
+    private Pair<String, List<Entity>> generateDataList(TableConfig tableConfig, DataConfigBean dataConfig) {
+        String tableCode = tableConfig.getTableName();
+        Collection<Column> columnMetaInfoList = tableConfig.getTableMetaInfo().getColumns();
+        createTableColDataProvider(tableCode, columnMetaInfoList, dataConfig.getColumnConfigMap());
         // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
-        Set<String> uniqueIndexColAndPkSet = getUniqueIndexCol(tableInfo);
-        List<Entity> res = LongStream.range(0L, Long.parseLong(split[1])).parallel().mapToObj(index -> Entity.create(tableCode))
-                                     .peek(e -> tableInfo.getColumns()
-                                                         .forEach(column -> setColumnValue(dataConfig, tableCode, uniqueIndexColAndPkSet, e, column)))
+        List<Entity> res = LongStream.range(0L, tableConfig.getGenNum())
+                                     .parallel()
+                                     .mapToObj(index -> Entity.create(tableCode))
+                                     .peek(e -> columnMetaInfoList.forEach(
+                                             column -> setColumnValue(dataConfig, tableCode, tableConfig.getPkInfo(), e, column)))
                                      .toList();
         return Pair.of(tableCode, res);
     }
@@ -164,16 +149,6 @@ public class DataGenerator {
         entity.set(colName,
                    nextVal == null ? colDefaultVal == null ? dictDefaultVal == null ? typeDefaultVal : dictDefaultVal : colDefaultVal : nextVal);
     }
-
-    private static final Integer DEFAULT_VAL = 0;
-    private static final Map<JdbcType, Object> TYPE_DEFAULT_VAL_MAP = new HashMap<>() {{
-        put(JdbcType.VARCHAR, "1");
-        put(JdbcType.CHAR, "1");
-        put(JdbcType.NUMERIC, 1);
-        put(JdbcType.TIMESTAMP, LocalDateTime.now());
-        put(JdbcType.INTEGER, 1);
-    }};
-    private final Map<String, Map<String, ColDataProvider>> tableColDataProviderMap = new ConcurrentHashMap<>(16);
 
     /**
      * 获取列数据生成器的代理实现
@@ -244,9 +219,11 @@ public class DataGenerator {
      * @param columnConfigMap 表的列配置信息
      */
     public void createTableColDataProvider(String tableCode, Collection<Column> columns, Map<String, ColumnConfig> columnConfigMap) {
-        Map<String, ColDataProvider> colDataProviderMap = columns.parallelStream().filter(column -> columnConfigMap.containsKey(column.getName()))
-                                                                 .map(column -> createColDataProvider(columnConfigMap.get(column.getName()))).collect(
-                        Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
+        Map<String, ColDataProvider> colDataProviderMap = columns.parallelStream()
+                                                                 .filter(column -> columnConfigMap.containsKey(column.getName()))
+                                                                 .map(column -> createColDataProvider(columnConfigMap.get(column.getName())))
+                                                                 .collect(Collectors.toMap(ColDataProvider::getName,
+                                                                                           colDataProvider -> colDataProvider));
         tableColDataProviderMap.put(tableCode, colDataProviderMap);
     }
 

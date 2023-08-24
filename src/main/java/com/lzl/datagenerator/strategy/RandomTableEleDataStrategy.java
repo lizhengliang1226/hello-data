@@ -14,11 +14,10 @@ import java.util.List;
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 @ToString
 public class RandomTableEleDataStrategy implements DataStrategy {
-
     private List<Object> randomList;
     private final String dataSourceId;
     private final String querySql;
@@ -32,7 +31,7 @@ public class RandomTableEleDataStrategy implements DataStrategy {
                 randomList = Db.use(dataSourceId).query(querySql).stream().map(e -> e.get(queryCol)).distinct().toList();
                 CacheManager.getInstance().put(dataSourceId + "_" + queryCol, randomList);
             } catch (SQLException e) {
-                Log.get().error("构建rand-table-ele策略异常，数据源ID[{}]查询SQL[{}]查询字段[{}]",dataSourceId, querySql, queryCol);
+                Log.get().error("构建rand-table-ele策略异常，数据源ID[{}]查询SQL[{}]查询字段[{}]", dataSourceId, querySql, queryCol);
                 throw new RuntimeException(e);
             }
         }

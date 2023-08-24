@@ -2,3 +2,15 @@ showSql = true
 formatSql = false
 showParams = true
 sqlLevel = debug
+[his]
+url = jdbc:oracle:thin:@10.203.88.25:1521:orcl
+username = fspt_his3
+password = fspt
+[cur]
+url = jdbc:oracle:thin:@10.203.88.25:1521:orcl
+username = fspt3
+password = fspt
+[kbssoptsett]
+url = jdbc:sqlserver://127.0.0.1:1433;DatabaseName=kbssoptsett
+username = sa
+password = 991226Ab#

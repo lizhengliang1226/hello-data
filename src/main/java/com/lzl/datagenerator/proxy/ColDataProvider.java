@@ -1,9 +1,11 @@
 package com.lzl.datagenerator.proxy;
 
+import java.util.Set;
+
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 public interface ColDataProvider extends Cloneable {
     /**
@@ -28,4 +30,10 @@ public interface ColDataProvider extends Cloneable {
      * 重置方法，将数据重置到开始状态，在每张表数据生成完后调用
      */
     void reset();
+
+    /**
+     * 获取当前已经生成的数据集合
+     * @return 数据集合
+     */
+    Set<Object> getCurGenSet();
 }

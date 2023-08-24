@@ -15,7 +15,6 @@ public class DefaultDataStrategy implements DataStrategy {
     private final AtomicLong baseVal = new AtomicLong(0L);
 
     public DefaultDataStrategy(ColumnConfig columnConfig) {
-
     }
 
     @Override
@@ -23,13 +22,8 @@ public class DefaultDataStrategy implements DataStrategy {
         return baseVal.getAndIncrement();
     }
 
-
     @Override
     public String getName() {
         return "default";
-    }
-
-    public DefaultDataStrategy() {
-
     }
 }

@@ -1,11 +1,12 @@
-generate: cur
-datasourceGroupList:
+generate: kbssoptsett
+dataConfigList:
   - dataSourceId: mysql
     columnConfig:
       - colName: id
         strategy: default
     tableConfig:
-      - a:50000
+      - tableName: a
+        genNum: 0
   - dataSourceId: cur
     columnConfig:
       - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG,FEE_CFG_SN,FEE_CFG_ID,FEE_TEMPLATE_CFG_SN,ORIGIN_TMPL_SN
@@ -88,28 +89,44 @@ datasourceGroupList:
         randomEle: ["0","1"]
     tableConfig:
       # 佣金模板配置
-      - COMM_TEMPLATE:1000
+      - tableName: COMM_TEMPLATE
+        genNum: 0
       # 机构配置
-      - BRANCH_ORG_CFG:1000
+      - tableName: BRANCH_ORG_CFG
+        genNum: 0
       # 资金账号配置
-      - CUACCT_FEE_CFG:1000
+      - tableName: CUACCT_FEE_CFG
+        genNum: 0
       # 费用模板声明
-      - FEE_TEMPLATE_DEFINE:1000
+      - tableName: FEE_TEMPLATE_DEFINE
+        genNum: 0
       # 按证券类别的费用配置
-      - STKCLS_STDFEE_RATE:1000
+      - tableName: STKCLS_STDFEE_RATE
+        genNum: 0
       # 按证券代码的费用配置
-      - STKCODE_STDFEE_RATE:1000
+      - tableName: STKCODE_STDFEE_RATE
+        genNum: 0
       # 分段配置
-      - SUB_CAL_CFG:1000
-      - CUST_SETT:200000:0
-      - OPT_INFO:100000:0
-      - STKCLS_STDFEE_RATE:100000:0
-      - OPT_CLOSE_PRICE:100000:0
-      - OPT_ADJUST_INFO:100000:0
-      - OPT_ASSET:100000:0
-      - Q_CUACCT_FUND:100000:0
-      - OPT_CUACCT_FUND:100000:0
-      - OPT_COMB_ASSET:100000:0
+      - tableName: SUB_CAL_CFG
+        genNum: 0
+      - tableName: CUST_SETT
+        genNum: 0
+      - tableName: OPT_INFO
+        genNum: 0
+      - tableName: STKCLS_STDFEE_RATE
+        genNum: 0
+      - tableName: OPT_CLOSE_PRICE
+        genNum: 0
+      - tableName: OPT_ADJUST_INFO
+        genNum: 0
+      - tableName: OPT_ASSET
+        genNum: 0
+      - tableName: Q_CUACCT_FUND
+        genNum: 0
+      - tableName: OPT_CUACCT_FUND
+        genNum: 0
+      - tableName: OPT_COMB_ASSET
+        genNum: 0
     dictConfig:
       dictTableName: UPM_DICT_ITEMS
       dictCodeColName: DICT_CODE
@@ -168,18 +185,70 @@ datasourceGroupList:
         strategy: auto-inc
         baseValue: 1200000000
     tableConfig:
-      - CUST_SETT:200000
-      - OPT_INFO:100000:0
-      - STKCLS_STDFEE_RATE:100000:0
-      - OPT_CLOSE_PRICE:100000:0
-      - OPT_ADJUST_INFO:100000:0
-      - OPT_ASSET:100000:0
-      - Q_CUACCT_FUND:100000:0
-      - OPT_CUACCT_FUND:100000:0
-      - OPT_COMB_ASSET:100000:0
+      - tableName: CUST_SETT
+        genNum: 10
+      - tableName: OPT_INFO
+        genNum: 10
+      - tableName: STKCLS_STDFEE_RATE
+        genNum: 10
+      - tableName: OPT_CLOSE_PRICE
+        genNum: 10
+      - tableName: OPT_ADJUST_INFO
+        genNum: 10
+      - tableName: OPT_ASSET
+        genNum: 10
+      - tableName: Q_CUACCT_FUND
+        genNum: 10
+      - tableName: OPT_CUACCT_FUND
+        genNum: 10
+      - tableName: OPT_COMB_ASSET
+        genNum: 10
     colDefaultValue:
       SETT_DATE: 20230404
       TRD_DATE: 20230404
       MARKET: 1
       BOARD: 15
       SUB_CUACCT_CODE: 0
+  - dataSourceId: kbssoptsett
+    columnConfig:
+      - colName: USER_CODE,CUST_CODE
+        strategy: auto-inc
+        baseValue: 124100000000
+      - colName: TRDACCT
+        strategy: auto-inc
+        baseValue: 13100000000
+        prefix: A
+      - colName: INT_ORG
+        strategy: rand-table-ele
+        querySql: "select ORG_CODE from ORG"
+        queryCol: ORG_CODE
+    tableConfig:
+      - tableName: USERS
+        genNum: 10
+      - tableName: USER_BASIC_INFO
+        genNum: 10
+      - tableName: CUSTOMER
+        genNum: 10
+      - tableName: CUST_OTHER_INFO
+        genNum: 10
+      - tableName: OPT_TRDACCT
+        genNum: 10
+    dictConfig:
+      dictTableName: SYS_DD_ITEM
+      dictCodeColName: DD_ID
+      dictItemColName: DD_ITEM
+    loadDictCache: true
+    colDefaultValue:
+      MAX_FEE: 500
+      MIN_FEE: 0
+      SETT_DATE: 20230404
+      TRD_DATE: 20230404
+      MARKET: 1
+      BOARD: 15
+      SUB_CUACCT_CODE: 0
+      FEE_CAL_AMT: 100
+      FEE_MAX: 100
+      FEE_MIN: 0
+      FEE_RATE: 1
+      STKBD: 15
+    ignoreCol: PARTITION_FIELD

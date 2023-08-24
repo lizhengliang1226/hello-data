@@ -6,7 +6,7 @@ import lombok.ToString;
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 @ToString
 public class FixedValueDataStrategy implements DataStrategy {
