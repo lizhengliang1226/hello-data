@@ -32,15 +32,6 @@ import java.util.stream.LongStream;
 public class DataGenerator {
     private final Configuration configuration;
     private static final String DEL_TABLE_TMPL = "TRUNCATE TABLE %s";
-    private static final Map<JdbcType, Object> TYPE_DEFAULT_VAL_MAP = new HashMap<>() {{
-        put(JdbcType.VARCHAR, "1");
-        put(JdbcType.CHAR, "1");
-        put(JdbcType.NUMERIC, 1);
-        put(JdbcType.TIMESTAMP, LocalDateTime.now());
-        put(JdbcType.INTEGER, 1);
-        put(JdbcType.BIGINT, 1);
-        put(JdbcType.SMALLINT, 1);
-    }};
     private final Map<String, Map<String, ColDataProvider>> tableColDataProviderMap = new ConcurrentHashMap<>(16);
 
     public DataGenerator(Configuration configuration) {
@@ -183,7 +174,7 @@ public class DataGenerator {
      * @return JDBC类型的默认值
      */
     public Object getDefaultValByJdbcType(JdbcType jdbcType) {
-        Object defaultVal = TYPE_DEFAULT_VAL_MAP.get(jdbcType);
+        Object defaultVal = configuration.getTypeDefaultValMap().get(jdbcType);
         if (defaultVal == null) {
             Log.get().error("数据类型{}没有默认值设置，请检查!", jdbcType.name());
             throw new RuntimeException();

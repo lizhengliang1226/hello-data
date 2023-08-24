@@ -1,4 +1,12 @@
 generate: kbssoptsett
+jdbcTypeDefaultValue:
+  - VARCHAR: 1
+  - CHAR: 1
+  - NUMERIC: 1
+  - TIMESTAMP: NOW()
+  - INTEGER: 1
+  - BIGINT: 1
+  - SMALLINT: 1
 dataConfigList:
   - dataSourceId: mysql
     columnConfig:
@@ -186,23 +194,23 @@ dataConfigList:
         baseValue: 1200000000
     tableConfig:
       - tableName: CUST_SETT
-        genNum: 10
+        genNum: 0
       - tableName: OPT_INFO
-        genNum: 10
+        genNum: 0
       - tableName: STKCLS_STDFEE_RATE
-        genNum: 10
+        genNum: 0
       - tableName: OPT_CLOSE_PRICE
-        genNum: 10
+        genNum: 0
       - tableName: OPT_ADJUST_INFO
-        genNum: 10
+        genNum: 0
       - tableName: OPT_ASSET
-        genNum: 10
+        genNum: 0
       - tableName: Q_CUACCT_FUND
-        genNum: 10
+        genNum: 0
       - tableName: OPT_CUACCT_FUND
-        genNum: 10
+        genNum: 0
       - tableName: OPT_COMB_ASSET
-        genNum: 10
+        genNum: 0
     colDefaultValue:
       SETT_DATE: 20230404
       TRD_DATE: 20230404
@@ -224,15 +232,15 @@ dataConfigList:
         queryCol: ORG_CODE
     tableConfig:
       - tableName: USERS
-        genNum: 10
+        genNum: 0
       - tableName: USER_BASIC_INFO
-        genNum: 10
+        genNum: 0
       - tableName: CUSTOMER
-        genNum: 10
+        genNum: 0
       - tableName: CUST_OTHER_INFO
-        genNum: 10
+        genNum: 0
       - tableName: OPT_TRDACCT
-        genNum: 10
+        genNum: 0
     dictConfig:
       dictTableName: SYS_DD_ITEM
       dictCodeColName: DD_ID
