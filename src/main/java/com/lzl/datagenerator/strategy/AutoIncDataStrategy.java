@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @since 2023/7/31-22:24
  */
 @ToString
-public class AutoIncDataStrategy implements DataStrategy {
+public non-sealed class AutoIncDataStrategy implements DataStrategy {
     private final AtomicLong baseVal;
     private final String prefix;
     private final String suffix;

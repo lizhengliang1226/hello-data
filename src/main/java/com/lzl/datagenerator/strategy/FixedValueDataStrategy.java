@@ -9,7 +9,7 @@ import lombok.ToString;
  * @since 2023/7/31-22:24
  */
 @ToString
-public class FixedValueDataStrategy implements DataStrategy {
+public non-sealed class FixedValueDataStrategy implements DataStrategy {
     private final Object fixedValue;
 
     @Override

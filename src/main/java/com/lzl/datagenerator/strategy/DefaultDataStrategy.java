@@ -8,10 +8,10 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author LZL
  * @version v1.0
- * @date 2023/7/31-22:24
+ * @since 2023/7/31-22:24
  */
 @ToString
-public class DefaultDataStrategy implements DataStrategy {
+public non-sealed class DefaultDataStrategy implements DataStrategy {
     private final AtomicLong baseVal = new AtomicLong(0L);
 
     public DefaultDataStrategy(ColumnConfig columnConfig) {

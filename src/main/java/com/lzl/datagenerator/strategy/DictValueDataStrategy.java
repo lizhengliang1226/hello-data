@@ -16,7 +16,7 @@ import java.util.Map;
  * @since 2023/7/31-22:24
  */
 @ToString
-public class DictValueDataStrategy implements DataStrategy {
+public non-sealed class DictValueDataStrategy implements DataStrategy {
     private final String colName;
     private final String dictColName;
     private final String dataSourceId;

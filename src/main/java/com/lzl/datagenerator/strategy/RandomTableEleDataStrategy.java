@@ -17,7 +17,7 @@ import java.util.List;
  * @since 2023/7/31-22:24
  */
 @ToString
-public class RandomTableEleDataStrategy implements DataStrategy {
+public non-sealed class RandomTableEleDataStrategy implements DataStrategy {
     private List<Object> randomList;
     private final String dataSourceId;
     private final String querySql;

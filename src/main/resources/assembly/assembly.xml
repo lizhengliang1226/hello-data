@@ -61,9 +61,9 @@
     </fileSets>
     <files>
         <!--此处配置自己加进来的依赖，不是用maven的pom加载进来的就写在这里-->
-        <file>
-            <source>${project.basedir}/src/main/resources/lib/orai18n.jar</source>
-            <outputDirectory>lib</outputDirectory>
-        </file>
+        <!--<file>-->
+        <!--    <source>${project.basedir}/src/main/resources/lib/orai18n.jar</source>-->
+        <!--    <outputDirectory>lib</outputDirectory>-->
+        <!--</file>-->
     </files>
 </assembly>

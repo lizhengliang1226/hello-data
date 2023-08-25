@@ -1,12 +1,12 @@
 generate: kbssoptsett
 jdbcTypeDefaultValue:
-  - VARCHAR: 1
-  - CHAR: 1
-  - NUMERIC: 1
-  - TIMESTAMP: NOW()
-  - INTEGER: 1
-  - BIGINT: 1
-  - SMALLINT: 1
+  VARCHAR: 1
+  CHAR: 1
+  NUMERIC: 1
+  TIMESTAMP: $sysdate
+  INTEGER: 1
+  BIGINT: 1
+  SMALLINT: 1
 dataConfigList:
   - dataSourceId: mysql
     columnConfig:
@@ -232,15 +232,15 @@ dataConfigList:
         queryCol: ORG_CODE
     tableConfig:
       - tableName: USERS
-        genNum: 0
+        genNum: 100
       - tableName: USER_BASIC_INFO
-        genNum: 0
+        genNum: 100
       - tableName: CUSTOMER
-        genNum: 0
+        genNum: 100
       - tableName: CUST_OTHER_INFO
-        genNum: 0
+        genNum: 100
       - tableName: OPT_TRDACCT
-        genNum: 0
+        genNum: 100
     dictConfig:
       dictTableName: SYS_DD_ITEM
       dictCodeColName: DD_ID

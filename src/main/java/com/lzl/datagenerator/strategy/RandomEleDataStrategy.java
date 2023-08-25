@@ -12,7 +12,7 @@ import java.util.List;
  * @since 2023/7/31-22:24
  */
 @ToString
-public class RandomEleDataStrategy implements DataStrategy {
+public non-sealed class RandomEleDataStrategy implements DataStrategy {
     private final List<Object> randomList;
 
     @Override
