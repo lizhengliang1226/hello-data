@@ -91,10 +91,10 @@ public class DataConfigBean {
         // 转换列配置
         transColumnConfig();
         // 加载表的元数据信息和主键信息
-        loadTableMetaInfoAndPkInfo();
+        transTableConfig();
     }
 
-    private void loadTableMetaInfoAndPkInfo() {
+    private void transTableConfig() {
         tableConfigMap = tableConfig.parallelStream().filter(t -> t.getGenNum() > 0).peek(tc -> {
             String tableCode = tc.getTableName();
             Table tableMetaInfo = MetaUtil.getTableMeta(DSFactory.get(dataSourceId), tableCode);
@@ -124,7 +124,7 @@ public class DataConfigBean {
      */
     private ColDataProvider createColDataProvider(ColumnConfig columnConfig) {
         DataStrategy dataStrategy = DataStrategyFactory.createDataStrategy(columnConfig);
-        return getColDataProxy(columnConfig.getColName(), dataStrategy);
+        return createColDataProxy(columnConfig.getColName(), dataStrategy);
 
     }
 
@@ -135,7 +135,7 @@ public class DataConfigBean {
      * @param strategy 策略名
      * @return 根据配置生成的代理实现
      */
-    private ColDataProvider getColDataProxy(String colName, DataStrategy strategy) {
+    private ColDataProvider createColDataProxy(String colName, DataStrategy strategy) {
         return ProxyUtil.newProxyInstance(new ColDataProviderProxyImpl(colName, strategy), ColDataProvider.class);
     }
 
