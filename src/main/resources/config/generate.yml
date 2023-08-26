@@ -259,4 +259,5 @@ dataConfigList:
       FEE_MIN: 0
       FEE_RATE: 1
       STKBD: 15
-    ignoreCol: PARTITION_FIELD
+      OPEN_DATE: 20150101
+      CLOSE_DATE: 20290303
