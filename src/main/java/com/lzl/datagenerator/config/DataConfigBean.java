@@ -1,14 +1,20 @@
 package com.lzl.datagenerator.config;
 
+import cn.hutool.aop.ProxyUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.db.Db;
 import cn.hutool.db.ds.DSFactory;
+import cn.hutool.db.meta.Column;
 import cn.hutool.db.meta.ColumnIndexInfo;
 import cn.hutool.db.meta.MetaUtil;
 import cn.hutool.db.meta.Table;
 import cn.hutool.log.Log;
+import com.lzl.datagenerator.proxy.ColDataProvider;
+import com.lzl.datagenerator.proxy.ColDataProviderProxyImpl;
+import com.lzl.datagenerator.strategy.DataStrategy;
+import com.lzl.datagenerator.strategy.DataStrategyFactory;
 import lombok.Data;
 
 import java.sql.SQLException;
@@ -26,7 +32,7 @@ public class DataConfigBean {
     private String dataSourceId;
     private List<ColumnConfig> columnConfig;
     private List<TableConfig> tableConfig;
-    private Map<String,TableConfig> tableConfigMap;
+    private Map<String, TableConfig> tableConfigMap;
     private DictConfig dictConfig;
     private String loadDictCache;
     private Map<String, String> colDefaultValue = new HashMap<>(16);
@@ -64,9 +70,13 @@ public class DataConfigBean {
 
     private void loadDictCache() {
         try {
-            CacheManager.getInstance().put(dataSourceId, Db.use(dataSourceId).findAll(dictConfig.getDictTableName()).stream().collect(
-                    Collectors.groupingBy(entity -> entity.get(dictConfig.getDictCodeColName()),
-                                          Collectors.mapping(entity -> entity.get(dictConfig.getDictItemColName()), Collectors.toList()))));
+            CacheManager.getInstance()
+                        .put(dataSourceId, Db.use(dataSourceId)
+                                             .findAll(dictConfig.getDictTableName())
+                                             .stream()
+                                             .collect(Collectors.groupingBy(entity -> entity.get(dictConfig.getDictCodeColName()),
+                                                                            Collectors.mapping(entity -> entity.get(dictConfig.getDictItemColName()),
+                                                                                               Collectors.toList()))));
         } catch (SQLException e) {
             e.printStackTrace();
             throw new RuntimeException(String.format("数据库ID为[%s]的字典缓存加载失败，异常信息：%s", dataSourceId, e.getMessage()));
@@ -90,9 +100,43 @@ public class DataConfigBean {
             Table tableMetaInfo = MetaUtil.getTableMeta(DSFactory.get(dataSourceId), tableCode);
             // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
             Set<String> uniqueIndexColAndPkSet = getUniqueIndexCol(tableMetaInfo);
+            Collection<Column> columnsMetaData = tableMetaInfo.getColumns();
+            Map<String, ColDataProvider> colDataProviderMap = createColDataProviderMap(columnsMetaData);
             tc.setPkInfo(uniqueIndexColAndPkSet);
-            tc.setTableMetaInfo(tableMetaInfo);
-        }).collect(Collectors.toMap(TableConfig::getTableName,tc->tc));
+            tc.setColumns(columnsMetaData);
+            tc.setColDataProvider(colDataProviderMap);
+        }).collect(Collectors.toMap(TableConfig::getTableName, tc -> tc));
+    }
+
+    private Map<String, ColDataProvider> createColDataProviderMap(Collection<Column> columnsMetaData) {
+        return columnsMetaData.parallelStream()
+                              .filter(column -> columnConfigMap.containsKey(column.getName()))
+                              .map(column -> createColDataProvider(columnConfigMap.get(column.getName())))
+                              .collect(Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
+    }
+
+
+    /**
+     * 根据列配置创建列数据生成器
+     *
+     * @param columnConfig 列配置
+     * @return 列数据生成器
+     */
+    private ColDataProvider createColDataProvider(ColumnConfig columnConfig) {
+        DataStrategy dataStrategy = DataStrategyFactory.createDataStrategy(columnConfig);
+        return getColDataProxy(columnConfig.getColName(), dataStrategy);
+
+    }
+
+    /**
+     * 获取列数据生成器的代理实现
+     *
+     * @param colName  列名
+     * @param strategy 策略名
+     * @return 根据配置生成的代理实现
+     */
+    private ColDataProvider getColDataProxy(String colName, DataStrategy strategy) {
+        return ProxyUtil.newProxyInstance(new ColDataProviderProxyImpl(colName, strategy), ColDataProvider.class);
     }
 
     /**
@@ -102,8 +146,12 @@ public class DataConfigBean {
      * @return 主键和唯一索引列集合
      */
     private Set<String> getUniqueIndexCol(Table tableInfo) {
-        return Stream.concat(tableInfo.getIndexInfoList().parallelStream().filter(index -> !index.isNonUnique()).flatMap(
-                                              index -> index.getColumnIndexInfoList().parallelStream()).map(ColumnIndexInfo::getColumnName).collect(Collectors.toSet())
+        return Stream.concat(tableInfo.getIndexInfoList()
+                                      .parallelStream()
+                                      .filter(index -> !index.isNonUnique())
+                                      .flatMap(index -> index.getColumnIndexInfoList().parallelStream())
+                                      .map(ColumnIndexInfo::getColumnName)
+                                      .collect(Collectors.toSet())
                                       .parallelStream(), tableInfo.getPkNames().parallelStream()).collect(Collectors.toSet());
     }
 

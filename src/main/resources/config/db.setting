@@ -14,3 +14,9 @@ password = fspt
 url = jdbc:sqlserver://127.0.0.1:1433;DatabaseName=kbssoptsett
 username = sa
 password = 991226Ab#
+[mysql]
+url = jdbc:mysql://localhost:3306/test?useSSL=true&useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+username = root
+password = 991226Ab#
+# mysql数据库链接数要设置大一点，太小了在保存数据时会不够用
+maxActive=16

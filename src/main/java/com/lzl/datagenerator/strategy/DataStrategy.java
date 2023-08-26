@@ -5,9 +5,8 @@ package com.lzl.datagenerator.strategy;
  * @version v1.0
  * @since 2023/7/31-22:24
  */
-public sealed interface DataStrategy
-        permits AutoIncDataStrategy, DefaultDataStrategy, DictValueDataStrategy, FixedValueDataStrategy, RandomEleDataStrategy,
-        RandomTableEleDataStrategy {
+public interface DataStrategy
+        {
     /**
      * 下一个值
      *

@@ -1,5 +1,6 @@
 package com.lzl.datagenerator.strategy;
 
+import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.ColumnConfig;
 import lombok.ToString;
 
@@ -8,9 +9,10 @@ import lombok.ToString;
  * @version v1.0
  * @since 2023/7/31-22:24
  */
+@Strategy(name = "fixed-value")
 @ToString
-public non-sealed class FixedValueDataStrategy implements DataStrategy {
-    private final Object fixedValue;
+public  class FixedValueDataStrategy implements DataStrategy {
+    private Object fixedValue;
 
     @Override
     public Object getNextVal() {
@@ -24,5 +26,8 @@ public non-sealed class FixedValueDataStrategy implements DataStrategy {
 
     public FixedValueDataStrategy(ColumnConfig columnConfig) {
         this.fixedValue = columnConfig.getFixedValue();
+    }
+
+    public FixedValueDataStrategy() {
     }
 }

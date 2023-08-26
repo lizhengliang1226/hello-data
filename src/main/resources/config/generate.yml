@@ -1,4 +1,4 @@
-generate: kbssoptsett
+generate: mysql
 jdbcTypeDefaultValue:
   VARCHAR: 1
   CHAR: 1
@@ -14,7 +14,7 @@ dataConfigList:
         strategy: default
     tableConfig:
       - tableName: a
-        genNum: 0
+        genNum: 100000
   - dataSourceId: cur
     columnConfig:
       - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG,FEE_CFG_SN,FEE_CFG_ID,FEE_TEMPLATE_CFG_SN,ORIGIN_TMPL_SN

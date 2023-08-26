@@ -3,6 +3,7 @@ package com.lzl.datagenerator.strategy;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.log.Log;
+import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.ColumnConfig;
 import lombok.ToString;
@@ -15,11 +16,13 @@ import java.util.Map;
  * @version v1.0
  * @since 2023/7/31-22:24
  */
+@Strategy(name = "dict-value")
 @ToString
-public non-sealed class DictValueDataStrategy implements DataStrategy {
-    private final String colName;
-    private final String dictColName;
-    private final String dataSourceId;
+public  class DictValueDataStrategy implements DataStrategy {
+    private String colName;
+    private String dictColName;
+    private String dataSourceId;
+
     @Override
     public Object getNextVal() {
         Map<String, List<Object>> dictCache = CacheManager.getInstance().get(dataSourceId);
@@ -45,5 +48,8 @@ public non-sealed class DictValueDataStrategy implements DataStrategy {
         this.colName = columnConfig.getColName();
         this.dictColName = columnConfig.getDictColName();
         this.dataSourceId = columnConfig.getDataSourceId();
+    }
+
+    public DictValueDataStrategy() {
     }
 }

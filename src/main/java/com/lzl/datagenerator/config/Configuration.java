@@ -34,6 +34,7 @@ public class Configuration {
             synchronized (DataConfigBean.class) {
                 // 第二次检查，保证只有一个实例被创建
                 if (CONFIGURATION == null) {
+                    CONFIGURATION=new Configuration();
                     CONFIGURATION = YamlUtil.loadByPath("classpath:/config/generate.yml", Configuration.class);
                     CONFIGURATION.getDataConfigList().parallelStream().filter(
                                          config -> "ALL".equals(CONFIGURATION.getGenerate()) || CONFIGURATION.getGenerate().contains(config.getDataSourceId()))
@@ -44,7 +45,6 @@ public class Configuration {
         }
         return CONFIGURATION;
     }
-
     private void initJdbcTypeDefaultValue() {
         typeDefaultValMap = jdbcTypeDefaultValue.entrySet().parallelStream().collect(Collectors.toMap(e -> JdbcType.valueOf(e.getKey()), e -> {
             if (placholderMap.containsKey(e.getValue())) {

@@ -5,11 +5,17 @@ import com.lzl.datagenerator.config.Configuration;
 
 /**
  * Hello world!
+ *
  * @author lzl1226
  */
 public class App {
     public static void main(String[] args) {
-        DataGenerator dataGenerator = new DataGenerator(Configuration.getInstance());
+        new App().start();
+    }
+
+    void start() {
+        Configuration instance = Configuration.getInstance();
+        DataGenerator dataGenerator = new DataGenerator(instance);
         dataGenerator.generate();
     }
 }

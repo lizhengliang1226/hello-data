@@ -1,6 +1,8 @@
 package com.lzl.datagenerator.strategy;
 
+import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.ColumnConfig;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.util.concurrent.atomic.AtomicLong;
@@ -10,12 +12,14 @@ import java.util.concurrent.atomic.AtomicLong;
  * @version v1.0
  * @since 2023/7/31-22:24
  */
+@Setter
 @ToString
-public non-sealed class AutoIncDataStrategy implements DataStrategy {
-    private final AtomicLong baseVal;
-    private final String prefix;
-    private final String suffix;
-    private final long step;
+@Strategy(name = "auto-inc")
+public  class AutoIncDataStrategy implements DataStrategy {
+    private AtomicLong baseVal;
+    private String prefix;
+    private String suffix;
+    private long step;
 
     @Override
     public Object getNextVal() {
@@ -32,5 +36,8 @@ public non-sealed class AutoIncDataStrategy implements DataStrategy {
         this.prefix = columnConfig.getPrefix();
         this.suffix = columnConfig.getSuffix();
         this.step = columnConfig.getStep() == 0 ? 1 : columnConfig.getStep();
+    }
+
+    public AutoIncDataStrategy() {
     }
 }

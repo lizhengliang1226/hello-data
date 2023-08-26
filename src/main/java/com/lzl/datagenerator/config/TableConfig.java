@@ -1,8 +1,11 @@
 package com.lzl.datagenerator.config;
 
-import cn.hutool.db.meta.Table;
+import cn.hutool.db.meta.Column;
+import com.lzl.datagenerator.proxy.ColDataProvider;
 import lombok.Data;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,5 +18,6 @@ public class TableConfig {
     private String tableName;
     private Integer genNum;
     private Set<String> pkInfo;
-    private Table tableMetaInfo;
+    private Collection<Column> columns;
+    private Map<String, ColDataProvider> colDataProvider;
 }

@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.db.Db;
 import cn.hutool.log.Log;
+import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.ColumnConfig;
 import lombok.ToString;
@@ -16,12 +17,13 @@ import java.util.List;
  * @version v1.0
  * @since 2023/7/31-22:24
  */
+@Strategy(name = "rand-table-ele")
 @ToString
-public non-sealed class RandomTableEleDataStrategy implements DataStrategy {
+public  class RandomTableEleDataStrategy implements DataStrategy {
     private List<Object> randomList;
-    private final String dataSourceId;
-    private final String querySql;
-    private final String queryCol;
+    private String dataSourceId;
+    private String querySql;
+    private String queryCol;
 
     @Override
     public Object getNextVal() {
@@ -47,5 +49,8 @@ public non-sealed class RandomTableEleDataStrategy implements DataStrategy {
         dataSourceId = columnConfig.getDataSourceId();
         querySql = columnConfig.getQuerySql();
         queryCol = columnConfig.getQueryCol();
+    }
+
+    public RandomTableEleDataStrategy() {
     }
 }

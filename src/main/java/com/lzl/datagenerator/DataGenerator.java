@@ -1,27 +1,23 @@
 package com.lzl.datagenerator;
 
-import cn.hutool.aop.ProxyUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.db.Db;
+import cn.hutool.db.DbUtil;
 import cn.hutool.db.Entity;
 import cn.hutool.db.meta.Column;
 import cn.hutool.db.meta.JdbcType;
 import cn.hutool.log.Log;
 import com.google.common.collect.Lists;
-import com.lzl.datagenerator.config.*;
+import com.lzl.datagenerator.config.CacheManager;
+import com.lzl.datagenerator.config.Configuration;
+import com.lzl.datagenerator.config.DataConfigBean;
+import com.lzl.datagenerator.config.TableConfig;
 import com.lzl.datagenerator.proxy.ColDataProvider;
-import com.lzl.datagenerator.proxy.ColDataProviderProxyImpl;
-import com.lzl.datagenerator.strategy.DataStrategy;
-import com.lzl.datagenerator.strategy.DataStrategyFactory;
 
 import java.sql.SQLException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
 
@@ -34,18 +30,20 @@ import java.util.stream.LongStream;
 public class DataGenerator {
     private final Configuration configuration;
     private static final String DEL_TABLE_TMPL = "TRUNCATE TABLE %s";
-    private final Map<String, Map<String, ColDataProvider>> tableColDataProviderMap = new ConcurrentHashMap<>(16);
 
     public DataGenerator(Configuration configuration) {
         this.configuration = configuration;
     }
 
     public void generate() {
-        configuration.getDataConfigList().parallelStream().filter(
-                config -> "ALL".equals(configuration.getGenerate()) || configuration.getGenerate().contains(config.getDataSourceId())).forEach(
-                dataConfigBean -> dataConfigBean.getTableConfigMap().values().parallelStream()
-                                                .map(tableConfig -> generateDataList(tableConfig, dataConfigBean))
-                                                .forEach(dataPair -> saveData(dataConfigBean, dataPair)));
+        configuration.getDataConfigList()
+                     .parallelStream()
+                     .filter(config -> "ALL".equals(configuration.getGenerate()) || configuration.getGenerate().contains(config.getDataSourceId()))
+                     .forEach(dataConfigBean -> dataConfigBean.getTableConfigMap()
+                                                              .values()
+                                                              .parallelStream()
+                                                              .map(tableConfig -> generateDataList(tableConfig, dataConfigBean))
+                                                              .forEach(dataPair -> saveData(dataConfigBean, dataPair)));
 
     }
 
@@ -57,7 +55,7 @@ public class DataGenerator {
         if (CollectionUtil.isNotEmpty(dataList)) {
             Log.get().info("开始删除表{}数据.", tableName);
             try {
-                // deleteByBatchSql(dataConfigBean, dataList, tableName, pkInfo);
+//                 deleteByBatchSql(dataConfigBean, dataList, tableName, pkInfo);
                 deleteByPkInfo(dataConfigBean, dataList, tableName, pkInfo);
             } catch (Exception e) {
                 Log.get().error("删除表[{}]数据失败", tableName);
@@ -79,23 +77,26 @@ public class DataGenerator {
 
     /**
      * 通过主键并行的一个个删除数据
+     *
      * @param dataConfigBean 数据配置
-     * @param dataList 数据集合
-     * @param tableName 表名
-     * @param pkInfo 主键列
+     * @param dataList       数据集合
+     * @param tableName      表名
+     * @param pkInfo         主键列
      */
     private void deleteByPkInfo(DataConfigBean dataConfigBean, List<Entity> dataList, String tableName, Set<String> pkInfo) {
         dataList.parallelStream().map(data -> {
             Entity entity = Entity.create(tableName);
-            Map<String, Object> pkDataMap = pkInfo.parallelStream().map(pk -> Pair.of(pk, data.get(pk))).collect(
-                    Collectors.toMap(Pair::getKey, Pair::getValue));
+            Map<String, Object> pkDataMap = pkInfo.parallelStream()
+                                                  .map(pk -> Pair.of(pk, data.get(pk)))
+                                                  .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
             entity.putAll(pkDataMap);
             return entity;
         }).forEach(e -> {
             try {
-                Db.use(dataConfigBean.getDataSourceId()).del(e);
-            } catch (SQLException ex) {
-                Log.get().error("数据库ID{}，表{}的数据删除失败，删除主键：{}", dataConfigBean.getDataSourceId(), generatePkStr(e, pkInfo));
+                DbUtil.use(DbUtil.getDs(dataConfigBean.getDataSourceId())).del(e);
+            } catch (Exception ex) {
+                Log.get()
+                   .error("数据库ID[{}]，表[{}]的数据删除失败，删除主键：{}", dataConfigBean.getDataSourceId(), tableName, generatePkStr(e, pkInfo));
                 throw new RuntimeException(ex);
             }
         });
@@ -107,30 +108,35 @@ public class DataGenerator {
 
     /**
      * 通过构建删除语句，批量执行，完成数据删除，使用的条件是根据主键得到in查询条件
+     *
      * @param dataConfigBean 数据配置
-     * @param dataList 数据列表
-     * @param tableName 表名
-     * @param pkInfo 主键列
+     * @param dataList       数据列表
+     * @param tableName      表名
+     * @param pkInfo         主键列
      */
     private void deleteByBatchSql(DataConfigBean dataConfigBean, List<Entity> dataList, String tableName, Set<String> pkInfo) {
-        List<String> deleteSqlList = Lists.partition(dataList, 10).parallelStream().map(list -> list.parallelStream().flatMap(
-                                                                                                            data -> pkInfo.parallelStream().map(pk -> Pair.of(pk, "'" + data.get(pk) + "'")).toList().stream()).collect(
-                                                                                                            Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList()))).entrySet().parallelStream()
-                                                                                                    .map(pkDataMap -> pkDataMap.getValue()
-                                                                                                                               .parallelStream()
-                                                                                                                               .map(String::valueOf)
-                                                                                                                               .collect(
-                                                                                                                                       Collectors.joining(
-                                                                                                                                               ",",
-                                                                                                                                               pkDataMap.getKey() + " in (",
-                                                                                                                                               ")")))
-                                                                                                    .collect(Collectors.joining(" and ",
-                                                                                                                                "delete from " + tableName + " where ",
-                                                                                                                                ""))).toList();
+        List<String> deleteSqlList = Lists.partition(dataList, 10)
+                                          .parallelStream()
+                                          .map(list -> list.parallelStream()
+                                                           .flatMap(data -> pkInfo.parallelStream()
+                                                                                  .map(pk -> Pair.of(pk, "'" + data.get(pk) + "'"))
+                                                                                  .toList()
+                                                                                  .stream())
+                                                           .collect(Collectors.groupingBy(Pair::getKey,
+                                                                                          Collectors.mapping(Pair::getValue, Collectors.toList())))
+                                                           .entrySet()
+                                                           .parallelStream()
+                                                           .map(pkDataMap -> pkDataMap.getValue()
+                                                                                      .parallelStream()
+                                                                                      .map(String::valueOf)
+                                                                                      .collect(Collectors.joining(",", pkDataMap.getKey() + " in (",
+                                                                                                                  ")")))
+                                                           .collect(Collectors.joining(" and ", "delete from " + tableName + " where ", "")))
+                                          .toList();
         try {
             Db.use(dataConfigBean.getDataSourceId()).executeBatch(deleteSqlList);
         } catch (SQLException e) {
-            Log.get().error("数据源{}删除数据失败，异常信息：{}",dataConfigBean.getDataSourceId(),e.getMessage());
+            Log.get().error("数据源{}删除数据失败，异常信息：{}", dataConfigBean.getDataSourceId(), e.getMessage());
             throw new RuntimeException(e);
         }
     }
@@ -143,16 +149,23 @@ public class DataGenerator {
      */
     private Pair<String, List<Entity>> generateDataList(TableConfig tableConfig, DataConfigBean dataConfig) {
         String tableCode = tableConfig.getTableName();
-        Collection<Column> columnMetaInfoList = tableConfig.getTableMetaInfo().getColumns();
-        createTableColDataProvider(tableCode, columnMetaInfoList, dataConfig.getColumnConfigMap());
+        Collection<Column> columnMetaInfoList = tableConfig.getColumns();
         // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
-        List<Entity> res = LongStream.range(0L, tableConfig.getGenNum()).parallel().mapToObj(index -> Entity.create(tableCode)).peek(
-                e -> columnMetaInfoList.forEach(column -> setColumnValue(dataConfig, tableCode, tableConfig.getPkInfo(), e, column))).toList();
+        List<Entity> res = LongStream.range(0L, tableConfig.getGenNum())
+                                     .parallel()
+                                     .mapToObj(index -> Entity.create(tableCode))
+                                     .peek(dataEntity -> columnMetaInfoList.forEach(
+                                             column -> setColumnValue(dataConfig, tableConfig, tableConfig.getPkInfo(), dataEntity, column)))
+                                     .toList();
         return Pair.of(tableCode, res);
     }
 
-    private void setColumnValue(DataConfigBean dataConfig, String tableCode, Set<String> uniqueIndexColAndPkSet, Entity entity, Column column) {
-        if (dataConfig.getIgnoreCol().contains(column.getName())) {
+    private void setColumnValue(DataConfigBean dataConfig,
+                                TableConfig tableConfig,
+                                Set<String> uniqueIndexColAndPkSet,
+                                Entity entity,
+                                Column column) {
+        if (Optional.ofNullable(dataConfig.getIgnoreCol()).orElse("").contains(column.getName())) {
             return;
         }
         // 类型
@@ -161,7 +174,7 @@ public class DataGenerator {
         String colName = column.getName();
         // 从上往下取值，优先级从高到低，数据生成策略>默认值>字典值>类型默认值
         // 数据生成策略器取值
-        Object nextVal = getNextVal(tableCode, colName);
+        Object nextVal = getNextVal(tableConfig.getColDataProvider(), colName);
         // 字段默认值
         Object colDefaultVal = dataConfig.getColDefaultValue().get(colName);
         // 取字典值
@@ -169,7 +182,7 @@ public class DataGenerator {
         // 类型默认值
         Object typeDefaultVal = getDefaultValByJdbcType(typeEnum);
         if (uniqueIndexColAndPkSet.contains(colName) && nextVal == null && colDefaultVal == null && dictDefaultVal == null) {
-            Log.get().error("表[{}]主键列或唯一索引列[{}]没有配置数据生成策略或默认值，请检查!", tableCode, colName);
+            Log.get().error("表[{}]主键列或唯一索引列[{}]没有配置数据生成策略或默认值，请检查!", tableConfig.getTableName(), colName);
             throw new RuntimeException();
         }
         // 根据优先级取值
@@ -178,26 +191,15 @@ public class DataGenerator {
                    nextVal == null ? colDefaultVal == null ? dictDefaultVal == null ? typeDefaultVal : dictDefaultVal : colDefaultVal : nextVal);
     }
 
-    /**
-     * 获取列数据生成器的代理实现
-     *
-     * @param colName  列名
-     * @param strategy 策略名
-     * @return 根据配置生成的代理实现
-     */
-    private ColDataProvider getColDataProxy(String colName, DataStrategy strategy) {
-        return ProxyUtil.newProxyInstance(new ColDataProviderProxyImpl(colName, strategy), ColDataProvider.class);
-    }
 
     /**
      * 获取某一列的下一个值
      *
-     * @param colName   列名
-     * @param tableCode 表名
+     * @param colName 列名
      * @return 下一个值
      */
-    public Object getNextVal(String tableCode, String colName) {
-        ColDataProvider colDataProvider = tableColDataProviderMap.get(tableCode).get(colName);
+    public Object getNextVal(Map<String, ColDataProvider> tableColDataProviderMap, String colName) {
+        ColDataProvider colDataProvider = tableColDataProviderMap.get(colName);
         if (colDataProvider == null) {
             return null;
         }
@@ -237,30 +239,5 @@ public class DataGenerator {
             return null;
         }
         return null;
-    }
-
-    /**
-     * 创建表的列数据生成器，生成一个map存入成员变量
-     *
-     * @param tableCode       表代码
-     * @param columns         表的元数据列
-     * @param columnConfigMap 表的列配置信息
-     */
-    public void createTableColDataProvider(String tableCode, Collection<Column> columns, Map<String, ColumnConfig> columnConfigMap) {
-        Map<String, ColDataProvider> colDataProviderMap = columns.parallelStream().filter(column -> columnConfigMap.containsKey(column.getName()))
-                                                                 .map(column -> createColDataProvider(columnConfigMap.get(column.getName()))).collect(
-                        Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
-        tableColDataProviderMap.put(tableCode, colDataProviderMap);
-    }
-
-    /**
-     * 根据列配置创建列数据生成器
-     *
-     * @param columnConfig 列配置
-     * @return 列数据生成器
-     */
-    private ColDataProvider createColDataProvider(ColumnConfig columnConfig) {
-        return getColDataProxy(columnConfig.getColName(), DataStrategyFactory.createDataStrategy(columnConfig.getStrategy(), columnConfig));
-
     }
 }
