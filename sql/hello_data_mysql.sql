@@ -1,12 +1,16 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     2023/8/27 3:15:18                            */
+/* Created on:     2023/8/27 14:51:47                           */
 /*==============================================================*/
 
 
 drop index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG;
 
 drop table if exists COLUMN_CONFIG;
+
+drop index STRATEGY_UNIX1 on STRATEGY;
+
+drop table if exists STRATEGY;
 
 drop index TABLE_CONFIG_UNIX1 on TABLE_CONFIG;
 
@@ -17,30 +21,50 @@ drop table if exists TABLE_CONFIG;
 /*==============================================================*/
 create table COLUMN_CONFIG
 (
-   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
-   COLUMN_NAME          varchar(32) comment 'åˆ—å',
-   DEFAULT_VAL          varchar(1024) comment 'é»˜è®¤å€¼',
-   STRATEGY_NAME        varchar(16) comment 'ç­–ç•¥å',
-   BASE_VALUE           varchar(1024) comment 'åŸºç¡€å€¼',
-   PREFIX               varchar(32) comment 'å‰ç¼€',
-   SUFFIX               varchar(32) comment 'åç¼€',
-   STEP                 numeric(10,0) default 0 comment 'æ­¥è¿›',
-   QUERY_SQL            varchar(1024) comment 'æŸ¥è¯¢SQL',
-   QUERY_COL            varchar(32) comment 'æŸ¥è¯¢çš„åˆ—',
-   RANDOM_ELE           varchar(1024) comment 'éšæœºå…ƒç´ åˆ—è¡¨',
-   DICT_COL_NAME        varchar(32) comment 'å­—å…¸åˆ—å',
-   FIXED_VALUE          varchar(1024) comment 'å›ºå®šå€¼'
+   DATASOURCE_ID        varchar(16) not null comment 'Êı¾İÔ´ID',
+   COLUMN_NAME          varchar(32) not null comment 'ÁĞÃû',
+   DEFAULT_VAL          varchar(1024) comment 'Ä¬ÈÏÖµ',
+   STRATEGY_NAME        varchar(16) not null comment '²ßÂÔÃû',
+   BASE_VALUE           bigint comment '»ù´¡Öµ',
+   PREFIX               varchar(32) comment 'Ç°×º',
+   SUFFIX               varchar(32) comment 'ºó×º',
+   STEP                 numeric(10,0) default 0 comment '²½½ø',
+   QUERY_SQL            varchar(1024) comment '²éÑ¯SQL',
+   QUERY_COL            varchar(32) comment '²éÑ¯µÄÁĞ',
+   RANDOM_ELE           varchar(1024) comment 'Ëæ»úÔªËØÁĞ±í',
+   DICT_COL_NAME        varchar(32) comment '×ÖµäÁĞÃû',
+   FIXED_VALUE          varchar(1024) comment '¹Ì¶¨Öµ'
 );
 
-alter table COLUMN_CONFIG comment 'åˆ—ç”Ÿæˆé…ç½®è¡¨';
+alter table COLUMN_CONFIG comment 'ÁĞÉú³ÉÅäÖÃ±í';
 
 /*==============================================================*/
 /* Index: COLUMN_CONFIG_UNIX1                                   */
 /*==============================================================*/
-create index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG
+create unique index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG
 (
    DATASOURCE_ID,
    COLUMN_NAME
+);
+
+/*==============================================================*/
+/* Table: STRATEGY                                              */
+/*==============================================================*/
+create table STRATEGY
+(
+   STRATEGY_ID          varchar(16) not null comment '²ßÂÔID',
+   STRATEGY_CODE        varchar(16) not null comment '²ßÂÔ´úÂë',
+   STRATEGY_NAME        varchar(16) not null comment '²ßÂÔÃû'
+);
+
+alter table STRATEGY comment '²ßÂÔ±í';
+
+/*==============================================================*/
+/* Index: STRATEGY_UNIX1                                        */
+/*==============================================================*/
+create unique index STRATEGY_UNIX1 on STRATEGY
+(
+   STRATEGY_ID
 );
 
 /*==============================================================*/
@@ -48,16 +72,16 @@ create index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG
 /*==============================================================*/
 create table TABLE_CONFIG
 (
-   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
-   TABLE_CODE           varchar(32) comment 'ç”Ÿæˆè¡¨ä»£ç ',
-   GEN_NUM              numeric(10,0) default 0 comment 'ç”Ÿæˆæ•°é‡',
-   LOAD_DICT_CACHE      numeric(1,0) default 0 comment 'æ˜¯å¦åŠ è½½å­—å…¸ç¼“å­˜ 1-åŠ è½½ 0-ä¸åŠ è½½',
-   DICT_TABLE_NAME      varchar(32) default ' ' comment 'å­—å…¸è¡¨å',
-   DICT_CODE_COL_NAME   varchar(32) default ' ' comment 'å­—å…¸è¡¨çš„å­—å…¸ä»£ç åˆ—å',
-   DICT_ITEM_COL_NAME   varchar(32) default ' ' comment 'å­—å…¸è¡¨çš„å­—å…¸é¡¹åˆ—å'
+   DATASOURCE_ID        varchar(16) not null comment 'Êı¾İÔ´ID',
+   TABLE_CODE           varchar(32) not null comment 'Éú³É±í´úÂë',
+   GEN_NUM              numeric(10,0) not null default 0 comment 'Éú³ÉÊıÁ¿',
+   LOAD_DICT_CACHE      numeric(1,0) not null default 0 comment 'ÊÇ·ñ¼ÓÔØ×Öµä»º´æ 1-¼ÓÔØ 0-²»¼ÓÔØ',
+   DICT_TABLE_NAME      varchar(32) not null default ' ' comment '×Öµä±íÃû',
+   DICT_CODE_COL_NAME   varchar(32) not null default ' ' comment '×Öµä±íµÄ×Öµä´úÂëÁĞÃû',
+   DICT_ITEM_COL_NAME   varchar(32) not null default ' ' comment '×Öµä±íµÄ×ÖµäÏîÁĞÃû'
 );
 
-alter table TABLE_CONFIG comment 'ç”Ÿæˆé…ç½®è¡¨';
+alter table TABLE_CONFIG comment '±íÉú³ÉÅäÖÃ±í';
 
 /*==============================================================*/
 /* Index: TABLE_CONFIG_UNIX1                                    */

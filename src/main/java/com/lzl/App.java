@@ -3,6 +3,7 @@ package com.lzl;
 import com.lzl.datagenerator.DataGenerator;
 import com.lzl.datagenerator.config.Configuration;
 
+
 /**
  * Hello world!
  *
