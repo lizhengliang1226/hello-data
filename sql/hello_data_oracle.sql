@@ -1,130 +1,208 @@
 /*==============================================================*/
 /* DBMS name:      ORACLE Version 11g                           */
-/* Created on:     2023/8/27 3:14:08                            */
+/* Created on:     2023/8/29 18:49:22                           */
 /*==============================================================*/
 
 
-drop index COLUMN_CONFIG_UNIX1;
+drop index COL_CONFIG_UNIX1;
 
-drop table COLUMN_CONFIG cascade constraints;
+drop table GEN_COLUMN_CONFIG cascade constraints;
+
+drop index SYS_CONFIG_UNIX1;
+
+drop table GEN_SYSTEM_CONFIG cascade constraints;
 
 drop index TABLE_CONFIG_UNIX1;
 
-drop table TABLE_CONFIG cascade constraints;
+drop table GEN_TABLE_CONFIG cascade constraints;
 
 /*==============================================================*/
-/* Table: COLUMN_CONFIG                                         */
+/* Table: GEN_COLUMN_CONFIG                                     */
 /*==============================================================*/
-create table COLUMN_CONFIG 
+create table GEN_COLUMN_CONFIG 
 (
    DATASOURCE_ID        VARCHAR2(16),
    COLUMN_NAME          VARCHAR2(32),
+   STRATEGY_CODE        VARCHAR2(16),
    DEFAULT_VAL          VARCHAR2(1024),
-   STRATEGY_NAME        VARCHAR2(16),
-   BASE_VALUE           VARCHAR2(1024),
+   BASE_VALUE           INTEGER,
    PREFIX               VARCHAR2(32),
    SUFFIX               VARCHAR2(32),
-   STEP                 NUMBER(10,0)         default 0,
-   QUERY_SQL            VARCHAR2(1024),
-   QUERY_COL            VARCHAR2(32),
-   RANDOM_ELE           VARCHAR2(1024),
-   DICT_COL_NAME        VARCHAR2(32),
-   FIXED_VALUE          VARCHAR2(1024)
+   STEP                 NUMBER(10)           default 0,
+   QUERY_SQL            VARCHAR2(1024)       default ' ',
+   QUERY_COL            VARCHAR2(32)         default ' ',
+   RANDOM_ELE           VARCHAR2(1024)       default ' ',
+   DICT_COL_NAME        VARCHAR2(32)         default ' '
 );
 
-comment on table COLUMN_CONFIG is
-'ÂàóÁîüÊàêÈÖçÁΩÆË°®';
+comment on table GEN_COLUMN_CONFIG is
+'¡–≈‰÷√±Ì';
 
-comment on column COLUMN_CONFIG.DATASOURCE_ID is
-'Êï∞ÊçÆÊ∫êID';
+comment on column GEN_COLUMN_CONFIG.DATASOURCE_ID is
+' ˝æ›‘¥ID';
 
-comment on column COLUMN_CONFIG.COLUMN_NAME is
-'ÂàóÂêç';
+comment on column GEN_COLUMN_CONFIG.COLUMN_NAME is
+'¡–√˚';
 
-comment on column COLUMN_CONFIG.DEFAULT_VAL is
-'ÈªòËÆ§ÂÄº';
+comment on column GEN_COLUMN_CONFIG.STRATEGY_CODE is
+'≤ﬂ¬‘¥˙¬Î';
 
-comment on column COLUMN_CONFIG.STRATEGY_NAME is
-'Á≠ñÁï•Âêç';
+comment on column GEN_COLUMN_CONFIG.DEFAULT_VAL is
+'ƒ¨»œ÷µ';
 
-comment on column COLUMN_CONFIG.BASE_VALUE is
-'Âü∫Á°ÄÂÄº';
+comment on column GEN_COLUMN_CONFIG.BASE_VALUE is
+'ª˘¥°÷µ';
 
-comment on column COLUMN_CONFIG.PREFIX is
-'ÂâçÁºÄ';
+comment on column GEN_COLUMN_CONFIG.PREFIX is
+'«∞◊∫';
 
-comment on column COLUMN_CONFIG.SUFFIX is
-'ÂêéÁºÄ';
+comment on column GEN_COLUMN_CONFIG.SUFFIX is
+'∫Û◊∫';
 
-comment on column COLUMN_CONFIG.STEP is
-'Ê≠•Ëøõ';
+comment on column GEN_COLUMN_CONFIG.STEP is
+'≤ΩΩ¯';
 
-comment on column COLUMN_CONFIG.QUERY_SQL is
-'Êü•ËØ¢SQL';
+comment on column GEN_COLUMN_CONFIG.QUERY_SQL is
+'≤È—ØSQL';
 
-comment on column COLUMN_CONFIG.QUERY_COL is
-'Êü•ËØ¢ÁöÑÂàó';
+comment on column GEN_COLUMN_CONFIG.QUERY_COL is
+'≤È—Øµƒ¡–';
 
-comment on column COLUMN_CONFIG.RANDOM_ELE is
-'ÈöèÊú∫ÂÖÉÁ¥†ÂàóË°®';
+comment on column GEN_COLUMN_CONFIG.RANDOM_ELE is
+'ÀÊª˙‘™Àÿ¡–±Ì';
 
-comment on column COLUMN_CONFIG.DICT_COL_NAME is
-'Â≠óÂÖ∏ÂàóÂêç';
-
-comment on column COLUMN_CONFIG.FIXED_VALUE is
-'Âõ∫ÂÆöÂÄº';
+comment on column GEN_COLUMN_CONFIG.DICT_COL_NAME is
+'◊÷µ‰¡–√˚';
 
 /*==============================================================*/
-/* Index: COLUMN_CONFIG_UNIX1                                   */
+/* Index: COL_CONFIG_UNIX1                                      */
 /*==============================================================*/
-create index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG (
+create unique index COL_CONFIG_UNIX1 on GEN_COLUMN_CONFIG (
    DATASOURCE_ID ASC,
    COLUMN_NAME ASC
 );
 
 /*==============================================================*/
-/* Table: TABLE_CONFIG                                          */
+/* Table: GEN_SYSTEM_CONFIG                                     */
 /*==============================================================*/
-create table TABLE_CONFIG 
+create table GEN_SYSTEM_CONFIG 
 (
    DATASOURCE_ID        VARCHAR2(16),
-   TABLE_CODE           VARCHAR2(32),
-   GEN_NUM              NUMBER(10,0)         default 0,
-   LOAD_DICT_CACHE      NUMBER(1,0)          default 0,
+   DATABASE_URL         VARCHAR2(16),
+   DATABASE_USER        VARCHAR2(16),
+   DATABASE_PASSWORD    VARCHAR2(32),
+   LOAD_DICT_CACHE      NUMBER(1)            default 0,
    DICT_TABLE_NAME      VARCHAR2(32)         default ' ',
    DICT_CODE_COL_NAME   VARCHAR2(32)         default ' ',
    DICT_ITEM_COL_NAME   VARCHAR2(32)         default ' '
 );
 
-comment on table TABLE_CONFIG is
-'ÁîüÊàêÈÖçÁΩÆË°®';
+comment on table GEN_SYSTEM_CONFIG is
+'œµÕ≥≈‰÷√±Ì';
 
-comment on column TABLE_CONFIG.DATASOURCE_ID is
-'Êï∞ÊçÆÊ∫êID';
+comment on column GEN_SYSTEM_CONFIG.DATASOURCE_ID is
+' ˝æ›‘¥ID';
 
-comment on column TABLE_CONFIG.TABLE_CODE is
-'ÁîüÊàêË°®‰ª£Á†Å';
+comment on column GEN_SYSTEM_CONFIG.DATABASE_URL is
+' ˝æ›‘¥URL';
 
-comment on column TABLE_CONFIG.GEN_NUM is
-'ÁîüÊàêÊï∞Èáè';
+comment on column GEN_SYSTEM_CONFIG.DATABASE_USER is
+' ˝æ›‘¥”√ªß√˚';
 
-comment on column TABLE_CONFIG.LOAD_DICT_CACHE is
-'ÊòØÂê¶Âä†ËΩΩÂ≠óÂÖ∏ÁºìÂ≠ò 1-Âä†ËΩΩ 0-‰∏çÂä†ËΩΩ';
+comment on column GEN_SYSTEM_CONFIG.DATABASE_PASSWORD is
+' ˝æ›‘¥√‹¬Î';
 
-comment on column TABLE_CONFIG.DICT_TABLE_NAME is
-'Â≠óÂÖ∏Ë°®Âêç';
+comment on column GEN_SYSTEM_CONFIG.LOAD_DICT_CACHE is
+' «∑Òº”‘ÿ◊÷µ‰ª∫¥Ê 1-º”‘ÿ 0-≤ªº”‘ÿ';
 
-comment on column TABLE_CONFIG.DICT_CODE_COL_NAME is
-'Â≠óÂÖ∏Ë°®ÁöÑÂ≠óÂÖ∏‰ª£Á†ÅÂàóÂêç';
+comment on column GEN_SYSTEM_CONFIG.DICT_TABLE_NAME is
+'◊÷µ‰±Ì√˚';
 
-comment on column TABLE_CONFIG.DICT_ITEM_COL_NAME is
-'Â≠óÂÖ∏Ë°®ÁöÑÂ≠óÂÖ∏È°πÂàóÂêç';
+comment on column GEN_SYSTEM_CONFIG.DICT_CODE_COL_NAME is
+'◊÷µ‰±Ìµƒ◊÷µ‰¥˙¬Î¡–√˚';
+
+comment on column GEN_SYSTEM_CONFIG.DICT_ITEM_COL_NAME is
+'◊÷µ‰±Ìµƒ◊÷µ‰œÓ¡–√˚';
+
+/*==============================================================*/
+/* Index: SYS_CONFIG_UNIX1                                      */
+/*==============================================================*/
+create unique index SYS_CONFIG_UNIX1 on GEN_SYSTEM_CONFIG (
+   DATASOURCE_ID ASC
+);
+
+/*==============================================================*/
+/* Table: GEN_TABLE_CONFIG                                      */
+/*==============================================================*/
+create table GEN_TABLE_CONFIG 
+(
+   DATASOURCE_ID        VARCHAR2(16),
+   TABLE_CODE           VARCHAR2(32),
+   GEN_NUM              NUMBER(10)           default 0,
+   COLUMN_NAME          VARCHAR2(32),
+   STRATEGY_CODE        VARCHAR2(16),
+   DEFAULT_VAL          VARCHAR2(1024),
+   BASE_VALUE           INTEGER,
+   PREFIX               VARCHAR2(32),
+   SUFFIX               VARCHAR2(32),
+   STEP                 NUMBER(10)           default 0,
+   QUERY_SQL            VARCHAR2(1024)       default ' ',
+   QUERY_COL            VARCHAR2(32)         default ' ',
+   RANDOM_ELE           VARCHAR2(1024)       default ' ',
+   DICT_COL_NAME        VARCHAR2(32)         default ' '
+);
+
+comment on table GEN_TABLE_CONFIG is
+'±Ì…˙≥…≈‰÷√±Ì';
+
+comment on column GEN_TABLE_CONFIG.DATASOURCE_ID is
+' ˝æ›‘¥ID';
+
+comment on column GEN_TABLE_CONFIG.TABLE_CODE is
+'…˙≥…±Ì¥˙¬Î';
+
+comment on column GEN_TABLE_CONFIG.GEN_NUM is
+'…˙≥… ˝¡ø';
+
+comment on column GEN_TABLE_CONFIG.COLUMN_NAME is
+'¡–√˚';
+
+comment on column GEN_TABLE_CONFIG.STRATEGY_CODE is
+'≤ﬂ¬‘¥˙¬Î';
+
+comment on column GEN_TABLE_CONFIG.DEFAULT_VAL is
+'ƒ¨»œ÷µ';
+
+comment on column GEN_TABLE_CONFIG.BASE_VALUE is
+'ª˘¥°÷µ';
+
+comment on column GEN_TABLE_CONFIG.PREFIX is
+'«∞◊∫';
+
+comment on column GEN_TABLE_CONFIG.SUFFIX is
+'∫Û◊∫';
+
+comment on column GEN_TABLE_CONFIG.STEP is
+'≤ΩΩ¯';
+
+comment on column GEN_TABLE_CONFIG.QUERY_SQL is
+'≤È—ØSQL';
+
+comment on column GEN_TABLE_CONFIG.QUERY_COL is
+'≤È—Øµƒ¡–';
+
+comment on column GEN_TABLE_CONFIG.RANDOM_ELE is
+'ÀÊª˙‘™Àÿ¡–±Ì';
+
+comment on column GEN_TABLE_CONFIG.DICT_COL_NAME is
+'◊÷µ‰¡–√˚';
 
 /*==============================================================*/
 /* Index: TABLE_CONFIG_UNIX1                                    */
 /*==============================================================*/
-create unique index TABLE_CONFIG_UNIX1 on TABLE_CONFIG (
+create unique index TABLE_CONFIG_UNIX1 on GEN_TABLE_CONFIG (
    DATASOURCE_ID ASC,
-   TABLE_CODE ASC
+   TABLE_CODE ASC,
+   COLUMN_NAME ASC
 );
 

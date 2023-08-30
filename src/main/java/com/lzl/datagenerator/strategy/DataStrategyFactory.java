@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class DataStrategyFactory {
     private static Map<String, Class<DataStrategy>> dataStrategyClassMap;
     static {
+        // long sum = IntStream.range(0, 10).parallel().mapToLong(i->Long.parseLong(i+"")).sum();
         init();
     }
 
@@ -31,6 +32,10 @@ public class DataStrategyFactory {
                                       .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
+    public static void main(String[] args) {
+
+        new DataStrategyFactory();
+    }
     /**
      * 根据列配置创建列的数据生成策略实例
      *
