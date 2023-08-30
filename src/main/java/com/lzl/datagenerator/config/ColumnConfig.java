@@ -12,9 +12,9 @@ import java.util.List;
  */
 @Data
 public class ColumnConfig implements Serializable {
-    private String colName;
-    private String strategy;
-    private Object fixedValue;
+    private String columnName;
+    private String strategyCode;
+    private String defaultValue;
     private Number baseValue;
     private List<Object> randomEle;
     private String querySql;

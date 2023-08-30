@@ -3,21 +3,17 @@ package com.lzl.datagenerator.entity;
 import java.io.Serializable;
 
 /**
- * 列配置表(GenColumnConfig)实体类
+ * 列配置表,不依赖于某个表的全局列配置(GenColumnDefaultConfig)实体类
  *
  * @author makejava
- * @since 2023-08-30 23:25:15
+ * @since 2023-08-30 23:25:20
  */
-public class GenColumnConfig implements Serializable {
-    private static final long serialVersionUID = -57165160056002991L;
+public class GenColumnDefaultConfig implements Serializable {
+    private static final long serialVersionUID = -75834189477926156L;
     /**
      * 数据源ID
      */
     private String datasourceId;
-    /**
-     * 生成表代码
-     */
-    private String tableCode;
     /**
      * 列名
      */
@@ -26,6 +22,10 @@ public class GenColumnConfig implements Serializable {
      * 策略模板ID，当为@时无意义
      */
     private String strategyTmplId;
+    /**
+     * 默认值
+     */
+    private String defaultVal;
 
 
     public String getDatasourceId() {
@@ -34,14 +34,6 @@ public class GenColumnConfig implements Serializable {
 
     public void setDatasourceId(String datasourceId) {
         this.datasourceId = datasourceId;
-    }
-
-    public String getTableCode() {
-        return tableCode;
-    }
-
-    public void setTableCode(String tableCode) {
-        this.tableCode = tableCode;
     }
 
     public String getColumnName() {
@@ -58,6 +50,14 @@ public class GenColumnConfig implements Serializable {
 
     public void setStrategyTmplId(String strategyTmplId) {
         this.strategyTmplId = strategyTmplId;
+    }
+
+    public String getDefaultVal() {
+        return defaultVal;
+    }
+
+    public void setDefaultVal(String defaultVal) {
+        this.defaultVal = defaultVal;
     }
 
 }

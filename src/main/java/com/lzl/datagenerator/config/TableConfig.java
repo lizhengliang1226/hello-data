@@ -15,6 +15,7 @@ import java.util.Set;
  */
 @Data
 public class TableConfig {
+    private String datasourceId;
     private String tableName;
     private Integer genNum;
     private Set<String> pkInfo;

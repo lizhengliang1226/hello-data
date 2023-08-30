@@ -1,6 +1,7 @@
 package com.lzl.datagenerator.config;
 
-import java.util.HashMap;
+import cn.hutool.core.map.SafeConcurrentHashMap;
+
 import java.util.Map;
 
 /**
@@ -18,7 +19,7 @@ public class CacheManager {
      * 私有构造函数，防止外部实例化
      */
     private CacheManager() {
-        cacheData = new HashMap<>();
+        cacheData = new SafeConcurrentHashMap<>();
     }
 
     /**

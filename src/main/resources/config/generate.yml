@@ -1,7 +1,7 @@
 generate-datasource:
   - id: kbssoptsett
     table-list: CUST_AUTO_EXE,CUSTOMER
-  - id: fspt
+  - id: fspt3
     table-list: CUST_AUTO_EXE,CUSTOMER
 #jdbcTypeDefaultValue:
 #  VARCHAR: 1

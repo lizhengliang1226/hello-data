@@ -43,9 +43,9 @@ public class DataStrategyFactory {
      * @return 数据策略实例
      */
     public static DataStrategy createDataStrategy(ColumnConfig columnConfig) {
-        Class<DataStrategy> dataStrategyClass = dataStrategyClassMap.get(columnConfig.getStrategy());
+        Class<DataStrategy> dataStrategyClass = dataStrategyClassMap.get(columnConfig.getStrategyCode());
         if (dataStrategyClass == null) {
-            Log.get().error("没有名为{}的列策略实现，请检查！", columnConfig.getStrategy());
+            Log.get().error("没有名为{}的列策略实现，请检查！", columnConfig.getStrategyCode());
             throw new RuntimeException();
         }
         Constructor<DataStrategy> constructor = null;
@@ -55,7 +55,7 @@ public class DataStrategyFactory {
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             Log.get()
                .error("创建数据源[{}]-列名[{}]-策略名[{}]的数据生成器时发生了异常，异常信息：", columnConfig.getDataSourceId(),
-                      columnConfig.getColName(), columnConfig.getStrategy());
+                      columnConfig.getColumnName(), columnConfig.getStrategyCode());
             throw new RuntimeException(e);
         }
     }
