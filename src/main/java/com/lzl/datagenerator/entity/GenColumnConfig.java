@@ -1,5 +1,6 @@
 package com.lzl.datagenerator.entity;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 /**
@@ -9,6 +10,7 @@ import java.io.Serializable;
  * @since 2023-08-30 23:25:15
  */
 public class GenColumnConfig implements Serializable {
+    @Serial
     private static final long serialVersionUID = -57165160056002991L;
     /**
      * 数据源ID
@@ -61,4 +63,3 @@ public class GenColumnConfig implements Serializable {
     }
 
 }
-

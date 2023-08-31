@@ -1,8 +1,8 @@
 generate-datasource:
   - id: kbssoptsett
-    table-list: CUST_AUTO_EXE,CUSTOMER
-  - id: fspt3
-    table-list: CUST_AUTO_EXE,CUSTOMER
+    table-list: CUST_AUTO_EXE
+#  - id: fspt3
+#    table-list: CUST_AUTO_EXE,CUSTOMER
 #jdbcTypeDefaultValue:
 #  VARCHAR: 1
 #  CHAR: 1
@@ -296,3 +296,9 @@ generate-datasource:
 #      FEE_MIN: 0
 #      FEE_RATE: 1
 ##      STKBD: 15
+
+#  url = jdbc:mysql://localhost:3306/test?useSSL=true&useUnicode=true&characterEncoding=UTF-8&useJDBCCompliantTimezoneShift=true&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+#  username = root
+#  password = 991226Ab#
+#  # mysql数据库链接数要设置大一点，太小了在保存数据时会不够用
+#  maxActive=16

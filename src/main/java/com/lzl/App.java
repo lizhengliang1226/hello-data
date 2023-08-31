@@ -1,17 +1,7 @@
 package com.lzl;
 
-import cn.hutool.db.Db;
-import cn.hutool.db.Entity;
-import cn.hutool.db.ds.DSFactory;
-import cn.hutool.log.Log;
-import cn.hutool.setting.Setting;
 import com.lzl.datagenerator.DataGenerator;
-import com.lzl.datagenerator.config.Configuration;
-import com.lzl.datagenerator.entity.GenColumnConfig;
-import com.lzl.datagenerator.entity.GenSystemConfig;
-
-import java.sql.SQLException;
-import java.util.List;
+import com.lzl.datagenerator.loader.ConfigLoader;
 
 
 
@@ -26,9 +16,12 @@ public class App {
     }
 
     void start() {
-        Configuration instance = Configuration.getInstance();
-        DataGenerator dataGenerator = new DataGenerator(instance);
+        // Configuration instance = Configuration.getInstance();
+        ConfigLoader configLoader = new ConfigLoader();
+        configLoader.load();
+        DataGenerator dataGenerator = new DataGenerator(configLoader);
         dataGenerator.generate();
+        configLoader.destory();
     }
 
 
