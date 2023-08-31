@@ -25,7 +25,7 @@ public  class FixedValueDataStrategy implements DataStrategy {
     }
 
     public FixedValueDataStrategy(ColumnConfig columnConfig) {
-        this.fixedValue = columnConfig.getFixedValue();
+        this.fixedValue = columnConfig.getDefaultValue();
     }
 
     public FixedValueDataStrategy() {

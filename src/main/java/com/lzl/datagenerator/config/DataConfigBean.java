@@ -44,10 +44,10 @@ public class DataConfigBean {
         if (CollectionUtil.isNotEmpty(columnConfig)) {
             try {
                 columnConfigMap = columnConfig.parallelStream().flatMap(columnConfig -> {
-                    String colName = columnConfig.getColName();
+                    String colName = columnConfig.getColumnName();
                     return Arrays.stream(colName.split(",")).flatMap(col -> {
                         ColumnConfig clone = ObjectUtil.clone(columnConfig);
-                        clone.setColName(col);
+                        clone.setColumnName(col);
                         clone.setDataSourceId(dataSourceId);
                         return Stream.of(Pair.of(col, clone));
                     });
@@ -124,7 +124,7 @@ public class DataConfigBean {
      */
     private ColDataProvider createColDataProvider(ColumnConfig columnConfig) {
         DataStrategy dataStrategy = DataStrategyFactory.createDataStrategy(columnConfig);
-        return createColDataProxy(columnConfig.getColName(), dataStrategy);
+        return createColDataProxy(columnConfig.getColumnName(), dataStrategy);
 
     }
 

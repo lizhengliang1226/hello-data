@@ -1,92 +1,142 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     2023/8/27 14:51:47                           */
+/* Created on:     2023/8/30 23:23:07                           */
 /*==============================================================*/
 
 
-drop index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG;
+drop index COL_CONFIG_UNIX1 on GEN_COLUMN_CONFIG;
 
-drop table if exists COLUMN_CONFIG;
+drop table if exists GEN_COLUMN_CONFIG;
 
-drop index STRATEGY_UNIX1 on STRATEGY;
+drop index COL_DEFAULT_UNIX1 on GEN_COLUMN_DEFAULT_CONFIG;
 
-drop table if exists STRATEGY;
+drop table if exists GEN_COLUMN_DEFAULT_CONFIG;
 
-drop index TABLE_CONFIG_UNIX1 on TABLE_CONFIG;
+drop index STRATEGY_TMPL_UNIX1 on GEN_STRATEGY_TEMPLATE;
 
-drop table if exists TABLE_CONFIG;
+drop table if exists GEN_STRATEGY_TEMPLATE;
+
+drop index SYS_CONFIG_UNIX1 on GEN_SYSTEM_CONFIG;
+
+drop table if exists GEN_SYSTEM_CONFIG;
+
+drop index TABLE_CONFIG_UNIX1 on GEN_TABLE_CONFIG;
+
+drop table if exists GEN_TABLE_CONFIG;
 
 /*==============================================================*/
-/* Table: COLUMN_CONFIG                                         */
+/* Table: GEN_COLUMN_CONFIG                                     */
 /*==============================================================*/
-create table COLUMN_CONFIG
+create table GEN_COLUMN_CONFIG
 (
-   DATASOURCE_ID        varchar(16) not null comment 'Êı¾İÔ´ID',
-   COLUMN_NAME          varchar(32) not null comment 'ÁĞÃû',
-   DEFAULT_VAL          varchar(1024) comment 'Ä¬ÈÏÖµ',
-   STRATEGY_NAME        varchar(16) not null comment '²ßÂÔÃû',
-   BASE_VALUE           bigint comment '»ù´¡Öµ',
-   PREFIX               varchar(32) comment 'Ç°×º',
-   SUFFIX               varchar(32) comment 'ºó×º',
-   STEP                 numeric(10,0) default 0 comment '²½½ø',
-   QUERY_SQL            varchar(1024) comment '²éÑ¯SQL',
-   QUERY_COL            varchar(32) comment '²éÑ¯µÄÁĞ',
-   RANDOM_ELE           varchar(1024) comment 'Ëæ»úÔªËØÁĞ±í',
-   DICT_COL_NAME        varchar(32) comment '×ÖµäÁĞÃû',
-   FIXED_VALUE          varchar(1024) comment '¹Ì¶¨Öµ'
+   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
+   TABLE_CODE           varchar(32) comment 'ç”Ÿæˆè¡¨ä»£ç ',
+   COLUMN_NAME          varchar(32) comment 'åˆ—å',
+   STRATEGY_TMPL_ID     varchar(16) comment 'ç­–ç•¥æ¨¡æ¿IDï¼Œå½“ä¸º@æ—¶æ— æ„ä¹‰'
 );
 
-alter table COLUMN_CONFIG comment 'ÁĞÉú³ÉÅäÖÃ±í';
+alter table GEN_COLUMN_CONFIG comment 'åˆ—é…ç½®è¡¨';
 
 /*==============================================================*/
-/* Index: COLUMN_CONFIG_UNIX1                                   */
+/* Index: COL_CONFIG_UNIX1                                      */
 /*==============================================================*/
-create unique index COLUMN_CONFIG_UNIX1 on COLUMN_CONFIG
+create unique index COL_CONFIG_UNIX1 on GEN_COLUMN_CONFIG
+(
+   DATASOURCE_ID,
+   TABLE_CODE,
+   COLUMN_NAME
+);
+
+/*==============================================================*/
+/* Table: GEN_COLUMN_DEFAULT_CONFIG                             */
+/*==============================================================*/
+create table GEN_COLUMN_DEFAULT_CONFIG
+(
+   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
+   COLUMN_NAME          varchar(32) comment 'åˆ—å',
+   STRATEGY_TMPL_ID     varchar(16) comment 'ç­–ç•¥æ¨¡æ¿IDï¼Œå½“ä¸º@æ—¶æ— æ„ä¹‰',
+   DEFAULT_VAL          varchar(1024) comment 'é»˜è®¤å€¼'
+);
+
+alter table GEN_COLUMN_DEFAULT_CONFIG comment 'åˆ—é…ç½®è¡¨,ä¸ä¾èµ–äºæŸä¸ªè¡¨çš„å…¨å±€åˆ—é…ç½®';
+
+/*==============================================================*/
+/* Index: COL_DEFAULT_UNIX1                                     */
+/*==============================================================*/
+create unique index COL_DEFAULT_UNIX1 on GEN_COLUMN_DEFAULT_CONFIG
 (
    DATASOURCE_ID,
    COLUMN_NAME
 );
 
 /*==============================================================*/
-/* Table: STRATEGY                                              */
+/* Table: GEN_STRATEGY_TEMPLATE                                 */
 /*==============================================================*/
-create table STRATEGY
+create table GEN_STRATEGY_TEMPLATE
 (
-   STRATEGY_ID          varchar(16) not null comment '²ßÂÔID',
-   STRATEGY_CODE        varchar(16) not null comment '²ßÂÔ´úÂë',
-   STRATEGY_NAME        varchar(16) not null comment '²ßÂÔÃû'
+   STRATEGY_TMPL_ID     varchar(16) comment 'ç­–ç•¥æ¨¡æ¿IDï¼Œå½“ä¸º@æ—¶æ— æ„ä¹‰',
+   STRATEGY_CODE        varchar(16) comment 'ç­–ç•¥ä»£ç ',
+   BASE_VALUE           bigint comment 'åŸºç¡€å€¼',
+   PREFIX               varchar(32) comment 'å‰ç¼€',
+   SUFFIX               varchar(32) comment 'åç¼€',
+   STEP                 numeric(10,0) default 1 comment 'æ­¥è¿›',
+   QUERY_SQL            varchar(1024) default ' ' comment 'æŸ¥è¯¢SQL',
+   QUERY_COL            varchar(32) default ' ' comment 'æŸ¥è¯¢çš„åˆ—',
+   RANDOM_ELE           varchar(1024) default ' ' comment 'éšæœºå…ƒç´ åˆ—è¡¨',
+   DICT_COL_NAME        varchar(32) default ' ' comment 'å­—å…¸åˆ—å'
 );
 
-alter table STRATEGY comment '²ßÂÔ±í';
+alter table GEN_STRATEGY_TEMPLATE comment 'ç­–ç•¥æ¨¡æ¿';
 
 /*==============================================================*/
-/* Index: STRATEGY_UNIX1                                        */
+/* Index: STRATEGY_TMPL_UNIX1                                   */
 /*==============================================================*/
-create unique index STRATEGY_UNIX1 on STRATEGY
+create unique index STRATEGY_TMPL_UNIX1 on GEN_STRATEGY_TEMPLATE
 (
-   STRATEGY_ID
+   STRATEGY_TMPL_ID
 );
 
 /*==============================================================*/
-/* Table: TABLE_CONFIG                                          */
+/* Table: GEN_SYSTEM_CONFIG                                     */
 /*==============================================================*/
-create table TABLE_CONFIG
+create table GEN_SYSTEM_CONFIG
 (
-   DATASOURCE_ID        varchar(16) not null comment 'Êı¾İÔ´ID',
-   TABLE_CODE           varchar(32) not null comment 'Éú³É±í´úÂë',
-   GEN_NUM              numeric(10,0) not null default 0 comment 'Éú³ÉÊıÁ¿',
-   LOAD_DICT_CACHE      numeric(1,0) not null default 0 comment 'ÊÇ·ñ¼ÓÔØ×Öµä»º´æ 1-¼ÓÔØ 0-²»¼ÓÔØ',
-   DICT_TABLE_NAME      varchar(32) not null default ' ' comment '×Öµä±íÃû',
-   DICT_CODE_COL_NAME   varchar(32) not null default ' ' comment '×Öµä±íµÄ×Öµä´úÂëÁĞÃû',
-   DICT_ITEM_COL_NAME   varchar(32) not null default ' ' comment '×Öµä±íµÄ×ÖµäÏîÁĞÃû'
+   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
+   DATABASE_URL         varchar(512) comment 'æ•°æ®æºURL',
+   DATABASE_USER        varchar(512) comment 'æ•°æ®æºç”¨æˆ·å',
+   DATABASE_PASSWORD    varchar(512) comment 'æ•°æ®æºå¯†ç ',
+   LOAD_DICT_CACHE      numeric(1,0) default 0 comment 'æ˜¯å¦åŠ è½½å­—å…¸ç¼“å­˜ 1-åŠ è½½ 0-ä¸åŠ è½½',
+   DICT_TABLE_NAME      varchar(32) default ' ' comment 'å­—å…¸è¡¨å',
+   DICT_CODE_COL_NAME   varchar(32) default ' ' comment 'å­—å…¸è¡¨çš„å­—å…¸ä»£ç åˆ—å',
+   DICT_ITEM_COL_NAME   varchar(32) default ' ' comment 'å­—å…¸è¡¨çš„å­—å…¸é¡¹åˆ—å'
 );
 
-alter table TABLE_CONFIG comment '±íÉú³ÉÅäÖÃ±í';
+alter table GEN_SYSTEM_CONFIG comment 'ç³»ç»Ÿé…ç½®è¡¨';
+
+/*==============================================================*/
+/* Index: SYS_CONFIG_UNIX1                                      */
+/*==============================================================*/
+create unique index SYS_CONFIG_UNIX1 on GEN_SYSTEM_CONFIG
+(
+   DATASOURCE_ID
+);
+
+/*==============================================================*/
+/* Table: GEN_TABLE_CONFIG                                      */
+/*==============================================================*/
+create table GEN_TABLE_CONFIG
+(
+   DATASOURCE_ID        varchar(16) comment 'æ•°æ®æºID',
+   TABLE_CODE           varchar(32) comment 'ç”Ÿæˆè¡¨ä»£ç ',
+   GEN_NUM              numeric(10,0) default 0 comment 'ç”Ÿæˆæ•°é‡'
+);
+
+alter table GEN_TABLE_CONFIG comment 'è¡¨ç”Ÿæˆé…ç½®è¡¨';
 
 /*==============================================================*/
 /* Index: TABLE_CONFIG_UNIX1                                    */
 /*==============================================================*/
-create unique index TABLE_CONFIG_UNIX1 on TABLE_CONFIG
+create unique index TABLE_CONFIG_UNIX1 on GEN_TABLE_CONFIG
 (
    DATASOURCE_ID,
    TABLE_CODE

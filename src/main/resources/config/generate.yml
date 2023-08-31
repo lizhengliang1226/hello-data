@@ -1,263 +1,298 @@
-generate: mysql
-jdbcTypeDefaultValue:
-  VARCHAR: 1
-  CHAR: 1
-  NUMERIC: 1
-  TIMESTAMP: $sysdate
-  INTEGER: 1
-  BIGINT: 1
-  SMALLINT: 1
-dataConfigList:
-  - dataSourceId: mysql
-    columnConfig:
-      - colName: id
-        strategy: default
-    tableConfig:
-      - tableName: a
-        genNum: 100000
-  - dataSourceId: cur
-    columnConfig:
-      - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG,FEE_CFG_SN,FEE_CFG_ID,FEE_TEMPLATE_CFG_SN,ORIGIN_TMPL_SN
-        strategy: default
-      - colName: ABN_REASON
-        strategy: dict-value
-      - colName: OPT_NUM
-        strategy: auto-inc
-        baseValue: 600000
-      - colName: CUACCT_CODE
-        strategy: auto-inc
-        baseValue: 2200000000
-      - colName: TRDACCT
-        strategy: auto-inc
-        baseValue: 56200000
-      - colName: COMB_NUM
-        strategy: auto-inc
-        baseValue: 1100000
-      - colName: LEG1_TYPE,LEG2_TYPE,LEG3_TYPE,LEG4_TYPE
-        strategy: dict-value
-        dictColName: OPT_TYPE
-      - colName: LEG1_SIDE,LEG2_SIDE,LEG3_SIDE,LEG4_SIDE
-        strategy: dict-value
-        dictColName: OPT_SIDE
-      - colName: LEG1_NUM,LEG2_NUM,LEG3_NUM,LEG4_NUM
-        strategy: rand-table-ele
-        querySql: "select OPT_NUM  from OPT_INFO"
-        queryCol: OPT_NUM
-      - colName: CURRENCY
-        strategy: rand-ele
-        randomEle: ["0","1","2"]
-      - colName: CONFIRM_FLAG
-        strategy: rand-ele
-        randomEle: ["0","1"]
-      - colName: CUST_CODE
-        strategy: auto-inc
-        baseValue: 1200000000
-      - colName: CHANNELES
-        strategy: dict-value
-        dictColName: CHANNEL
-      - colName: CUACCT_LVLS
-        strategy: dict-value
-        dictColName: CUACCT_LVL
-      - colName: CUACCT_CLSES
-        strategy: dict-value
-        dictColName: CUACCT_CLS
-      - colName: CUACCT_GRPS
-        strategy: dict-value
-        dictColName: CUACCT_GRP
-      - colName: FEE_TEMPLATE_NAME
-        strategy: auto-inc
-        baseValue: 0
-        prefix: 模板名称
-      - colName: FEE_TEMPLATE_DESC
-        strategy: auto-inc
-        baseValue: 0
-        prefix: 模板描述
-      - colName: FEE_ID
-        strategy: rand-table-ele
-        querySql: "select FEE_ID from FEE_DEFINE"
-        queryCol: FEE_ID
-#      - colName: FEE_CAL_AMT
+generate-datasource:
+  - id: kbssoptsett
+    table-list: CUST_AUTO_EXE,CUSTOMER
+  - id: fspt3
+    table-list: CUST_AUTO_EXE,CUSTOMER
+#jdbcTypeDefaultValue:
+#  VARCHAR: 1
+#  CHAR: 1
+#  NUMERIC: 1
+#  TIMESTAMP: $sysdate
+#  INTEGER: 1
+#  BIGINT: 1
+#  SMALLINT: 1
+#dataConfigList:
+#  - dataSourceId: mysql
+#    columnConfig:
+#      - colName: id
+#        strategy: default
+#    tableConfig:
+#      - tableName: a
+#        genNum: 100000
+#  - dataSourceId: cur
+#    columnConfig:
+#      - colName: STK_CODE,REC_SN,FEE_TEMPLATE_ID,INT_ORG,FEE_CFG_SN,FEE_CFG_ID,FEE_TEMPLATE_CFG_SN,ORIGIN_TMPL_SN
+#        strategy: default
+#      - colName: ABN_REASON
+#        strategy: dict-value
+#      - colName: OPT_NUM
 #        strategy: auto-inc
+#        baseValue: 600000
+#      - colName: CUACCT_CODE
+#        strategy: auto-inc
+#        baseValue: 2200000000
+#      - colName: TRDACCT
+#        strategy: auto-inc
+#        baseValue: 56200000
+#      - colName: COMB_NUM
+#        strategy: auto-inc
+#        baseValue: 1100000
+#      - colName: LEG1_TYPE,LEG2_TYPE,LEG3_TYPE,LEG4_TYPE
+#        strategy: dict-value
+#        dictColName: OPT_TYPE
+#      - colName: LEG1_SIDE,LEG2_SIDE,LEG3_SIDE,LEG4_SIDE
+#        strategy: dict-value
+#        dictColName: OPT_SIDE
+#      - colName: LEG1_NUM,LEG2_NUM,LEG3_NUM,LEG4_NUM
+#        strategy: rand-table-ele
+#        querySql: "select OPT_NUM  from OPT_INFO"
+#        queryCol: OPT_NUM
+#      - colName: CURRENCY
+#        strategy: rand-ele
+#        randomEle: ["0","1","2"]
+#      - colName: CONFIRM_FLAG
+#        strategy: rand-ele
+#        randomEle: ["0","1"]
+#      - colName: CUST_CODE
+#        strategy: auto-inc
+#        baseValue: 1200000000
+#      - colName: CHANNELES
+#        strategy: dict-value
+#        dictColName: CHANNEL
+#      - colName: CUACCT_LVLS
+#        strategy: dict-value
+#        dictColName: CUACCT_LVL
+#      - colName: CUACCT_CLSES
+#        strategy: dict-value
+#        dictColName: CUACCT_CLS
+#      - colName: CUACCT_GRPS
+#        strategy: dict-value
+#        dictColName: CUACCT_GRP
+#      - colName: FEE_TEMPLATE_NAME
+#        strategy: auto-inc
+#        baseValue: 0
+#        prefix: 模板名称
+#      - colName: FEE_TEMPLATE_DESC
+#        strategy: auto-inc
+#        baseValue: 0
+#        prefix: 模板描述
+#      - colName: FEE_ID
+#        strategy: rand-table-ele
 #        querySql: "select FEE_ID from FEE_DEFINE"
 #        queryCol: FEE_ID
-      - colName: STK_CLSES
-        strategy: dict-value
-        dictColName: STK_CLS
-      - colName: BIZ_CODES
-        strategy: dict-value
-        dictColName: BIZ_CODE
-      - colName: COMMISION_MODE
-        strategy: rand-ele
-        randomEle: ["0","1","2"]
-      - colName: TMPL_ORIGIN
-        strategy: rand-ele
-        randomEle: ["0","1","2","3"]
-      - colName: CHARGE_TYPE
-        strategy: rand-ele
-        randomEle: ["0","1"]
-    tableConfig:
-      # 佣金模板配置
-      - tableName: COMM_TEMPLATE
-        genNum: 0
-      # 机构配置
-      - tableName: BRANCH_ORG_CFG
-        genNum: 0
-      # 资金账号配置
-      - tableName: CUACCT_FEE_CFG
-        genNum: 0
-      # 费用模板声明
-      - tableName: FEE_TEMPLATE_DEFINE
-        genNum: 0
-      # 按证券类别的费用配置
-      - tableName: STKCLS_STDFEE_RATE
-        genNum: 0
-      # 按证券代码的费用配置
-      - tableName: STKCODE_STDFEE_RATE
-        genNum: 0
-      # 分段配置
-      - tableName: SUB_CAL_CFG
-        genNum: 0
-      - tableName: CUST_SETT
-        genNum: 0
-      - tableName: OPT_INFO
-        genNum: 0
-      - tableName: STKCLS_STDFEE_RATE
-        genNum: 0
-      - tableName: OPT_CLOSE_PRICE
-        genNum: 0
-      - tableName: OPT_ADJUST_INFO
-        genNum: 0
-      - tableName: OPT_ASSET
-        genNum: 0
-      - tableName: Q_CUACCT_FUND
-        genNum: 0
-      - tableName: OPT_CUACCT_FUND
-        genNum: 0
-      - tableName: OPT_COMB_ASSET
-        genNum: 0
-    dictConfig:
-      dictTableName: UPM_DICT_ITEMS
-      dictCodeColName: DICT_CODE
-      dictItemColName: DICT_ITEM
-    loadDictCache: true
-    colDefaultValue:
-      MAX_FEE: 500
-      MIN_FEE: 0
-      SETT_DATE: 20230404
-      TRD_DATE: 20230404
-      MARKET: 1
-      BOARD: 15
-      SUB_CUACCT_CODE: 0
-      FEE_CAL_AMT: 100
-      FEE_MAX: 100
-      FEE_MIN: 0
-      FEE_RATE: 1
-    ignoreCol: PARTITION_FIELD
-  - dataSourceId: his
-    columnConfig:
-      - colName: STK_CODE
-        strategy: default
-      - colName: ABN_REASON
-        strategy: dict-value
-      - colName: OPT_NUM
-        strategy: auto-inc
-        baseValue: 600000
-      - colName: FEE_CFG_SN
-        strategy: default
-      - colName: CUACCT_CODE
-        strategy: auto-inc
-        baseValue: 2200000000
-      - colName: TRDACCT
-        strategy: auto-inc
-        baseValue: 56200000
-      - colName: COMB_NUM
-        strategy: auto-inc
-        baseValue: 1100000
-      - colName: LEG1_TYPE,LEG2_TYPE,LEG3_TYPE,LEG4_TYPE
-        strategy: dict-value
-        dictColName: OPT_TYPE
-      - colName: LEG1_SIDE,LEG2_SIDE,LEG3_SIDE,LEG4_SIDE
-        strategy: dict-value
-        dictColName: OPT_SIDE
-      - colName: LEG1_NUM,LEG2_NUM,LEG3_NUM,LEG4_NUM
-        strategy: rand-table-ele
-        querySql: "select OPT_NUM  from OPT_INFO"
-        queryCol: OPT_NUM
-      - colName: CURRENCY
-        strategy: rand-ele
-        randomEle: ["0","1","2"]
-      - colName: CONFIRM_FLAG
-        strategy: rand-ele
-        randomEle: ["0","1"]
-      - colName: CUST_CODE
-        strategy: auto-inc
-        baseValue: 1200000000
-    tableConfig:
-      - tableName: CUST_SETT
-        genNum: 0
-      - tableName: OPT_INFO
-        genNum: 0
-      - tableName: STKCLS_STDFEE_RATE
-        genNum: 0
-      - tableName: OPT_CLOSE_PRICE
-        genNum: 0
-      - tableName: OPT_ADJUST_INFO
-        genNum: 0
-      - tableName: OPT_ASSET
-        genNum: 0
-      - tableName: Q_CUACCT_FUND
-        genNum: 0
-      - tableName: OPT_CUACCT_FUND
-        genNum: 0
-      - tableName: OPT_COMB_ASSET
-        genNum: 0
-    colDefaultValue:
-      SETT_DATE: 20230404
-      TRD_DATE: 20230404
-      MARKET: 1
-      BOARD: 15
-      SUB_CUACCT_CODE: 0
-  - dataSourceId: kbssoptsett
-    columnConfig:
-      - colName: USER_CODE,CUST_CODE
-        strategy: auto-inc
-        baseValue: 124100000000
-      - colName: TRDACCT
-        strategy: auto-inc
-        baseValue: 13100000000
-        prefix: A
-      - colName: INT_ORG
-        strategy: rand-table-ele
-        querySql: "select ORG_CODE from ORG"
-        queryCol: ORG_CODE
-    tableConfig:
-      - tableName: USERS
-        genNum: 100
-      - tableName: USER_BASIC_INFO
-        genNum: 100
-      - tableName: CUSTOMER
-        genNum: 100
-      - tableName: CUST_OTHER_INFO
-        genNum: 100
-      - tableName: OPT_TRDACCT
-        genNum: 100
-    dictConfig:
-      dictTableName: SYS_DD_ITEM
-      dictCodeColName: DD_ID
-      dictItemColName: DD_ITEM
-    loadDictCache: true
-    colDefaultValue:
-      MAX_FEE: 500
-      MIN_FEE: 0
-      SETT_DATE: 20230404
-      TRD_DATE: 20230404
-      MARKET: 1
-      BOARD: 15
-      SUB_CUACCT_CODE: 0
-      FEE_CAL_AMT: 100
-      FEE_MAX: 100
-      FEE_MIN: 0
-      FEE_RATE: 1
-      STKBD: 15
-      OPEN_DATE: 20150101
-      CLOSE_DATE: 20290303
+##      - colName: FEE_CAL_AMT
+##        strategy: auto-inc
+##        querySql: "select FEE_ID from FEE_DEFINE"
+##        queryCol: FEE_ID
+#      - colName: STK_CLSES
+#        strategy: dict-value
+#        dictColName: STK_CLS
+#      - colName: BIZ_CODES
+#        strategy: dict-value
+#        dictColName: BIZ_CODE
+#      - colName: COMMISION_MODE
+#        strategy: rand-ele
+#        randomEle: ["0","1","2"]
+#      - colName: TMPL_ORIGIN
+#        strategy: rand-ele
+#        randomEle: ["0","1","2","3"]
+#      - colName: CHARGE_TYPE
+#        strategy: rand-ele
+#        randomEle: ["0","1"]
+#    tableConfig:
+#      # 佣金模板配置
+#      - tableName: COMM_TEMPLATE
+#        genNum: 0
+#      # 机构配置
+#      - tableName: BRANCH_ORG_CFG
+#        genNum: 0
+#      # 资金账号配置
+#      - tableName: CUACCT_FEE_CFG
+#        genNum: 0
+#      # 费用模板声明
+#      - tableName: FEE_TEMPLATE_DEFINE
+#        genNum: 0
+#      # 按证券类别的费用配置
+#      - tableName: STKCLS_STDFEE_RATE
+#        genNum: 0
+#      # 按证券代码的费用配置
+#      - tableName: STKCODE_STDFEE_RATE
+#        genNum: 0
+#      # 分段配置
+#      - tableName: SUB_CAL_CFG
+#        genNum: 0
+#      - tableName: CUST_SETT
+#        genNum: 0
+#      - tableName: OPT_INFO
+#        genNum: 0
+#      - tableName: STKCLS_STDFEE_RATE
+#        genNum: 0
+#      - tableName: OPT_CLOSE_PRICE
+#        genNum: 0
+#      - tableName: OPT_ADJUST_INFO
+#        genNum: 0
+#      - tableName: OPT_ASSET
+#        genNum: 0
+#      - tableName: Q_CUACCT_FUND
+#        genNum: 0
+#      - tableName: OPT_CUACCT_FUND
+#        genNum: 0
+#      - tableName: OPT_COMB_ASSET
+#        genNum: 0
+#    dictConfig:
+#      dictTableName: UPM_DICT_ITEMS
+#      dictCodeColName: DICT_CODE
+#      dictItemColName: DICT_ITEM
+#    loadDictCache: true
+#    colDefaultValue:
+#      MAX_FEE: 500
+#      MIN_FEE: 0
+#      SETT_DATE: 20230404
+#      TRD_DATE: 20230404
+#      MARKET: 1
+#      BOARD: 15
+#      SUB_CUACCT_CODE: 0
+#      FEE_CAL_AMT: 100
+#      FEE_MAX: 100
+#      FEE_MIN: 0
+#      FEE_RATE: 1
+#    ignoreCol: PARTITION_FIELD
+#  - dataSourceId: his
+#    columnConfig:
+#      - colName: STK_CODE
+#        strategy: default
+#      - colName: ABN_REASON
+#        strategy: dict-value
+#      - colName: OPT_NUM
+#        strategy: auto-inc
+#        baseValue: 600000
+#      - colName: FEE_CFG_SN
+#        strategy: default
+#      - colName: CUACCT_CODE
+#        strategy: auto-inc
+#        baseValue: 2200000000
+#      - colName: TRDACCT
+#        strategy: auto-inc
+#        baseValue: 56200000
+#      - colName: COMB_NUM
+#        strategy: auto-inc
+#        baseValue: 1100000
+#      - colName: LEG1_TYPE,LEG2_TYPE,LEG3_TYPE,LEG4_TYPE
+#        strategy: dict-value
+#        dictColName: OPT_TYPE
+#      - colName: LEG1_SIDE,LEG2_SIDE,LEG3_SIDE,LEG4_SIDE
+#        strategy: dict-value
+#        dictColName: OPT_SIDE
+#      - colName: LEG1_NUM,LEG2_NUM,LEG3_NUM,LEG4_NUM
+#        strategy: rand-table-ele
+#        querySql: "select OPT_NUM  from OPT_INFO"
+#        queryCol: OPT_NUM
+#      - colName: CURRENCY
+#        strategy: rand-ele
+#        randomEle: ["0","1","2"]
+#      - colName: CONFIRM_FLAG
+#        strategy: rand-ele
+#        randomEle: ["0","1"]
+#      - colName: CUST_CODE
+#        strategy: auto-inc
+#        baseValue: 1200000000
+#    tableConfig:
+#      - tableName: CUST_SETT
+#        genNum: 0
+#      - tableName: OPT_INFO
+#        genNum: 0
+#      - tableName: STKCLS_STDFEE_RATE
+#        genNum: 0
+#      - tableName: OPT_CLOSE_PRICE
+#        genNum: 0
+#      - tableName: OPT_ADJUST_INFO
+#        genNum: 0
+#      - tableName: OPT_ASSET
+#        genNum: 0
+#      - tableName: Q_CUACCT_FUND
+#        genNum: 0
+#      - tableName: OPT_CUACCT_FUND
+#        genNum: 0
+#      - tableName: OPT_COMB_ASSET
+#        genNum: 0
+#    colDefaultValue:
+#      SETT_DATE: 20230404
+#      TRD_DATE: 2230404
+#      MARKET: 1
+#      BOARD: 15
+#      SUB_CUACCT_CODE: 0
+#  - dataSourceId: kbssoptsett
+#    columnConfig:
+#      - colName: USER_CODE
+#        strategy: auto-inc
+#        baseValue: 124100000000
+#      - colName: TRDACCT
+#        strategy: auto-inc
+#        baseValue: 195857752
+#        prefix: A
+#      - colName: INT_ORG
+#        strategy: rand-table-ele
+#        querySql: "select ORG_CODE from ORG"
+#        queryCol: ORG_CODE
+#      - colName: OPT_NUM
+#        strategy: rand-table-ele
+#        querySql: "SELECT OPT_NUM FROM OPT_INFO GROUP BY OPT_NUM,STKBD"
+#        queryCol: OPT_NUM
+#      - colName: USER_NAME
+#        strategy: auto-inc
+#        baseValue: 124100000000
+#        prefix: 客户
+#      - colName: OPT_UNDL_CODE
+#        strategy: auto-inc
+#        baseValue: 600446
+#      - colName: STKBD
+#        strategy: rand-ele
+#        randomEle: ["05","15"]
+#      - colName: OPT_UNDL_CLS
+#        strategy: rand-ele
+#        randomEle: ["A","D"]
+#    tableConfig:
+#      - tableName: USERS
+#        genNum: 0
+#      - tableName: USER_BASIC_INFO
+#        genNum: 0
+#      - tableName: CUSTOMER
+#        genNum: 0
+#      - tableName: CUST_OTHER_INFO
+#        genNum: 0
+#      - tableName: OPT_TRDACCT
+#        genNum: 0
+#      - tableName: CUST_AUTO_EXE
+#        genNum: 100
+#    dictConfig:
+#      dictTableName: SYS_DD_ITEM
+#      dictCodeColName: DD_ID
+#      dictItemColName: DD_ITEM
+#    loadDictCache: true
+#    colDefaultValue:
+#      OPT_NAME: 深购三月
+#      OPT_UNDL_NAME: 深100ETF
+#      CUST_CODE: 110303020714
+#      SUBACCT_CODE: 0
+#      USER_TYPE: 0
+#      CORP_ORG: 0
+#      USER_ROLES: 2
+#      ID_TYPE: 00
+#      ID_CODE: 522224199912264418
+#      OPEN_DATE: 20150101
+#      CLOSE_DATE: 20290303
+#      CUST_TYPE: 0
+#      CUST_CLS: 0
+#      CUST_STATUS: 0
+#      MAX_FEE: 500
+#      MIN_FEE: 0
+#      SETT_DATE: 20230404
+#      TRD_DATE: 20230404
+#      MARKET: 1
+#      BOARD: 15
+#      SUB_CUACCT_CODE: 0
+#      FEE_CAL_AMT: 100
+#      FEE_MAX: 100
+#      FEE_MIN: 0
+#      FEE_RATE: 1
+##      STKBD: 15

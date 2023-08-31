@@ -55,8 +55,8 @@ public class DataGenerator {
         if (CollectionUtil.isNotEmpty(dataList)) {
             Log.get().info("开始删除表{}数据.", tableName);
             try {
-//                 deleteByBatchSql(dataConfigBean, dataList, tableName, pkInfo);
-                deleteByPkInfo(dataConfigBean, dataList, tableName, pkInfo);
+                deleteByBatchSql(dataConfigBean, dataList, tableName, pkInfo);
+                // deleteByPkInfo(dataConfigBean, dataList, tableName, pkInfo);
             } catch (Exception e) {
                 Log.get().error("删除表[{}]数据失败", tableName);
                 throw new RuntimeException(e);
