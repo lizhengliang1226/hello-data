@@ -9,7 +9,6 @@ import cn.hutool.core.map.SafeConcurrentHashMap;
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import cn.hutool.db.Db;
-import cn.hutool.db.DbUtil;
 import cn.hutool.db.Entity;
 import cn.hutool.db.ds.DSFactory;
 import cn.hutool.db.meta.*;
@@ -30,6 +29,7 @@ import com.lzl.datagenerator.proxy.ColDataProvider;
 import com.lzl.datagenerator.proxy.ColDataProviderProxyImpl;
 import com.lzl.datagenerator.strategy.DataStrategy;
 import com.lzl.datagenerator.strategy.DataStrategyFactory;
+import com.lzl.datagenerator.utils.DbUtils;
 import com.lzl.datagenerator.utils.KeyGenerator;
 import lombok.Getter;
 
@@ -55,8 +55,6 @@ public class ConfigLoader implements Loader {
     private final String DATASOURCE_DRIVER_CLASS_NAME_PROP = "driver";
     private final String DATASOURCE_PASSWORD_PROP = "password";
     private Map<String, List<String>> genConfig;
-    @Getter
-    private DSFactory globalDsFactory;
     private static final byte[] encryptKey = new byte[]{-115, -35, -109, 40, -22, 108, 123, -92, -52, -28, -59, -21, -78, 54, -101, 8};
     private static final SymmetricCrypto AES = new SymmetricCrypto(SymmetricAlgorithm.AES, encryptKey);
     @Getter
@@ -82,7 +80,7 @@ public class ConfigLoader implements Loader {
 
     @Override
     public void destory() {
-        globalDsFactory.destroy();
+        DbUtils.destroy();
     }
 
     public void loadDatabaseConfig() {
@@ -137,7 +135,7 @@ public class ConfigLoader implements Loader {
                                                           Integer genNum = tc.getGenNum();
                                                           String tableCode = tc.getTableCode();
                                                           TableConfig tableConfig = new TableConfig();
-                                                          Table tableMetaInfo = MetaUtil.getTableMeta(globalDsFactory.getDataSource(datasourceId),
+                                                          Table tableMetaInfo = MetaUtil.getTableMeta(DbUtils.getDataSource(datasourceId),
                                                                                                       tableCode);
                                                           // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
                                                           Set<String> uniqueIndexColAndPkSet = getUniqueIndexCol(tableMetaInfo);
@@ -193,7 +191,7 @@ public class ConfigLoader implements Loader {
                              left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? and a.TABLE_CODE = ?
                               and a.COLUMN_NAME in(%s)
                     """;
-            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(String.format(sql,  getColNameListStr(
+            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtils.use(datasourceId).query(String.format(sql,  getColNameListStr(
                                                                                                                                   columnsMetaData)),
                                                                                                                           GenColumnConfigVo.class,
                                                                                                                           datasourceId, tableCode
@@ -218,7 +216,7 @@ public class ConfigLoader implements Loader {
                     where a.DATASOURCE_ID = ?
                       and a.COLUMN_NAME in (%s)
                                         """;
-            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(String.format(sql1, getColNameListStr(
+            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtils.use(datasourceId).query(String.format(sql1, getColNameListStr(
                                                                                                                                                 columnsMetaData)),
                                                                                                                                         GenColumnDefaultConfigVo.class,
                                                                                                                                         datasourceId)
@@ -289,7 +287,7 @@ public class ConfigLoader implements Loader {
     }
 
     private String getColNameListStr(Collection<Column> columnsMetaData) {
-        return columnsMetaData.stream().map(column -> "'" + column.getName() + "'").collect(Collectors.joining(","));
+        return columnsMetaData.parallelStream().map(column -> "'" + column.getName() + "'").collect(Collectors.joining(","));
     }
 
     /**
@@ -318,7 +316,7 @@ public class ConfigLoader implements Loader {
     private void loadSystemConfig() throws SQLException {
         List<GenSystemConfig> systemConfigList = Db.use().findAll(Entity.create("GEN_SYSTEM_CONFIG").set("DATASOURCE_ID", genConfig.keySet()),
                                                                   GenSystemConfig.class);
-        Setting sysSetting = systemConfigList.parallelStream().map(this::decryptSysConfig).reduce(Setting.create(), (setting, sysConfig) -> {
+        Setting sysSetting = systemConfigList.parallelStream().filter(sys->genConfig.containsKey(sys.getDatasourceId())).map(this::decryptSysConfig).reduce(Setting.create(), (setting, sysConfig) -> {
             Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUrl()).setByGroup(
                     DATASOURCE_USER_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUser()).setByGroup(DATASOURCE_PASSWORD_PROP,
                                                                                                                sysConfig.getDatasourceId(),
@@ -328,7 +326,7 @@ public class ConfigLoader implements Loader {
             }
             return curSetting;
         }, Setting::addSetting);
-        globalDsFactory = DSFactory.create(sysSetting);
+        DbUtils.setGlobalDsFactory( DSFactory.create(sysSetting));
     }
 
     private GenSystemConfig decryptSysConfig(GenSystemConfig genSystemConfig) {
@@ -347,7 +345,7 @@ public class ConfigLoader implements Loader {
         DataSource dataSource = dsFactory.getDataSource(sysConfig.getDatasourceId());
         Map<Object, List<Object>> dictCache;
         try {
-            dictCache = Db.use(dataSource).findAll(sysConfig.getDictTableName()).stream().collect(
+            dictCache = Db.use(dataSource).findAll(sysConfig.getDictTableName()).parallelStream().collect(
                     Collectors.groupingBy(entity -> entity.get(sysConfig.getDictCodeColName()),
                                           Collectors.mapping(entity -> entity.get(sysConfig.getDictItemColName()), Collectors.toList())));
         } catch (SQLException e) {

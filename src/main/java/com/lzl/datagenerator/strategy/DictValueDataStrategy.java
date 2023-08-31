@@ -6,6 +6,7 @@ import cn.hutool.log.Log;
 import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.ColumnConfig;
+import com.lzl.datagenerator.utils.KeyGenerator;
 import lombok.ToString;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public  class DictValueDataStrategy implements DataStrategy {
 
     @Override
     public Object getNextVal() {
-        Map<String, List<Object>> dictCache = CacheManager.getInstance().get(dataSourceId);
+        Map<String, List<Object>> dictCache = CacheManager.getInstance().get(KeyGenerator.genDictCacheKey(dataSourceId));
         if (dictCache == null) {
             Log.get().error("数据源ID[{}]列名[{}]配置了字典缓存策略但是未启用字典缓存或字典缓存不存在，请检查!", dataSourceId, colName);
             throw new RuntimeException();

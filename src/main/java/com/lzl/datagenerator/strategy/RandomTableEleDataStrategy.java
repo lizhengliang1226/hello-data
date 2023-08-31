@@ -2,11 +2,13 @@ package com.lzl.datagenerator.strategy;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.db.Db;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.log.Log;
 import com.lzl.datagenerator.annotations.Strategy;
 import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.ColumnConfig;
+import com.lzl.datagenerator.utils.DbUtils;
+import com.lzl.datagenerator.utils.KeyGenerator;
 import lombok.ToString;
 
 import java.sql.SQLException;
@@ -27,11 +29,11 @@ public  class RandomTableEleDataStrategy implements DataStrategy {
 
     @Override
     public Object getNextVal() {
-        randomList = CacheManager.getInstance().get(dataSourceId + "_" + queryCol);
+        randomList = CacheManager.getInstance().get(KeyGenerator.getRandomTableEleCacheKey(DigestUtil.md5Hex(querySql), queryCol, dataSourceId));
         if (CollUtil.isEmpty(randomList)) {
             try {
-                randomList = Db.use(dataSourceId).query(querySql).stream().map(e -> e.get(queryCol)).distinct().toList();
-                CacheManager.getInstance().put(dataSourceId + "_" + queryCol, randomList);
+                randomList = DbUtils.use(dataSourceId).query(querySql).stream().map(e -> e.get(queryCol)).distinct().toList();
+                CacheManager.getInstance().put(KeyGenerator.getRandomTableEleCacheKey(DigestUtil.md5Hex(querySql), queryCol, dataSourceId), randomList);
             } catch (SQLException e) {
                 Log.get().error("构建rand-table-ele策略异常，数据源ID[{}]查询SQL[{}]查询字段[{}]", dataSourceId, querySql, queryCol);
                 throw new RuntimeException(e);
