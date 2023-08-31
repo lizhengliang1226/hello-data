@@ -6,10 +6,10 @@ import java.io.Serializable;
  * 系统配置表(GenSystemConfig)实体类
  *
  * @author makejava
- * @since 2023-08-29 18:56:19
+ * @since 2023-08-31 21:34:50
  */
 public class GenSystemConfig implements Serializable {
-    private static final long serialVersionUID = -50615623394342689L;
+    private static final long serialVersionUID = 571996367111473019L;
     /**
      * 数据源ID
      */
@@ -18,6 +18,10 @@ public class GenSystemConfig implements Serializable {
      * 数据源URL
      */
     private String databaseUrl;
+    /**
+     * 驱动名称
+     */
+    private String databaseDriverClassName;
     /**
      * 数据源用户名
      */
@@ -58,6 +62,14 @@ public class GenSystemConfig implements Serializable {
 
     public void setDatabaseUrl(String databaseUrl) {
         this.databaseUrl = databaseUrl;
+    }
+
+    public String getDatabaseDriverClassName() {
+        return databaseDriverClassName;
+    }
+
+    public void setDatabaseDriverClassName(String databaseDriverClassName) {
+        this.databaseDriverClassName = databaseDriverClassName;
     }
 
     public String getDatabaseUser() {
@@ -109,3 +121,4 @@ public class GenSystemConfig implements Serializable {
     }
 
 }
+

@@ -52,6 +52,7 @@ public class ConfigLoader implements Loader {
     private static final String CONFIG_FILE_PATH = "classpath:config/generate.yml";
     private final String DATASOURCE_URL_PROP = "url";
     private final String DATASOURCE_USER_PROP = "username";
+    private final String DATASOURCE_DRIVER_CLASS_NAME_PROP = "driver";
     private final String DATASOURCE_PASSWORD_PROP = "password";
     private Map<String, List<String>> genConfig;
     @Getter
@@ -189,14 +190,14 @@ public class ConfigLoader implements Loader {
                            RANDOM_ELE,
                            DICT_COL_NAME
                     from GEN_COLUMN_CONFIG a
-                             left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? a.TABLE_CODE = ?
-                              and a.COLUMN_NAME in(?)
+                             left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? and a.TABLE_CODE = ?
+                              and a.COLUMN_NAME in(%s)
                     """;
-            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(sql,
+            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(String.format(sql,  getColNameListStr(
+                                                                                                                                  columnsMetaData)),
                                                                                                                           GenColumnConfigVo.class,
-                                                                                                                          datasourceId, tableCode,
-                                                                                                                          getColNameListStr(
-                                                                                                                                  columnsMetaData))
+                                                                                                                          datasourceId, tableCode
+                                                                                                                        )
                                                                   .stream().collect(Collectors.toMap(GenColumnConfigVo::getColumnName, c -> c));
             String sql1 = """
                     select DATASOURCE_ID,
@@ -215,13 +216,12 @@ public class ConfigLoader implements Loader {
                     from GEN_COLUMN_DEFAULT_CONFIG a
                              left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID
                     where a.DATASOURCE_ID = ?
-                      and a.COLUMN_NAME in (?)
+                      and a.COLUMN_NAME in (%s)
                                         """;
-            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(sql,
+            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId)).query(String.format(sql1, getColNameListStr(
+                                                                                                                                                columnsMetaData)),
                                                                                                                                         GenColumnDefaultConfigVo.class,
-                                                                                                                                        datasourceId,
-                                                                                                                                        getColNameListStr(
-                                                                                                                                                columnsMetaData))
+                                                                                                                                        datasourceId)
                                                                                 .parallelStream().filter(cg -> {
                         if ("@".equals(cg.getStrategyTmplId())) {
                             globalColumnDefaultValMap.put(cg.getDatasourceId() + "_" + cg.getColumnName(), transDefaultVal(cg.getDefaultVal()));
@@ -319,10 +319,11 @@ public class ConfigLoader implements Loader {
         List<GenSystemConfig> systemConfigList = Db.use().findAll(Entity.create("GEN_SYSTEM_CONFIG").set("DATASOURCE_ID", genConfig.keySet()),
                                                                   GenSystemConfig.class);
         Setting sysSetting = systemConfigList.parallelStream().map(this::decryptSysConfig).reduce(Setting.create(), (setting, sysConfig) -> {
-            Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatasourceId()).setByGroup(
+            Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUrl()).setByGroup(
                     DATASOURCE_USER_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUser()).setByGroup(DATASOURCE_PASSWORD_PROP,
                                                                                                                sysConfig.getDatasourceId(),
-                                                                                                               sysConfig.getDatabasePassword());
+                                                                                                               sysConfig.getDatabasePassword()).setByGroup(DATASOURCE_DRIVER_CLASS_NAME_PROP,
+                                                                                                                                                           sysConfig.getDatasourceId(),sysConfig.getDatabaseDriverClassName());
             if (sysConfig.getLoadDictCache() == 1) {
                 loadDictCache(sysConfig, curSetting);
             }
