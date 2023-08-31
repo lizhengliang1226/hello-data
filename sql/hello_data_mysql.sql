@@ -1,6 +1,6 @@
 /*==============================================================*/
 /* DBMS name:      MySQL 5.0                                    */
-/* Created on:     2023/8/31 21:30:23                           */
+/* Created on:     2023/8/31 22:11:52                           */
 /*==============================================================*/
 
 
@@ -151,7 +151,6 @@ create table GEN_SYSTEM_CONFIG
 (
    DATASOURCE_ID        varchar(16) comment '数据源ID',
    DATABASE_URL         varchar(512) comment '数据源URL',
-   DATABASE_DRIVER_CLASS_NAME varchar(32) comment '驱动名称',
    DATABASE_USER        varchar(512) comment '数据源用户名',
    DATABASE_PASSWORD    varchar(512) comment '数据源密码',
    LOAD_DICT_CACHE      numeric(1,0) default 0 comment '是否加载字典缓存 1-加载 0-不加载',

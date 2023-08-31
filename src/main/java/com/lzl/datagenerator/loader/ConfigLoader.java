@@ -322,8 +322,7 @@ public class ConfigLoader implements Loader {
             Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUrl()).setByGroup(
                     DATASOURCE_USER_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUser()).setByGroup(DATASOURCE_PASSWORD_PROP,
                                                                                                                sysConfig.getDatasourceId(),
-                                                                                                               sysConfig.getDatabasePassword()).setByGroup(DATASOURCE_DRIVER_CLASS_NAME_PROP,
-                                                                                                                                                           sysConfig.getDatasourceId(),sysConfig.getDatabaseDriverClassName());
+                                                                                                               sysConfig.getDatabasePassword());
             if (sysConfig.getLoadDictCache() == 1) {
                 loadDictCache(sysConfig, curSetting);
             }

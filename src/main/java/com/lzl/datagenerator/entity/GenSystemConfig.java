@@ -19,10 +19,6 @@ public class GenSystemConfig implements Serializable {
      */
     private String databaseUrl;
     /**
-     * 驱动名称
-     */
-    private String databaseDriverClassName;
-    /**
      * 数据源用户名
      */
     private String databaseUser;
@@ -62,14 +58,6 @@ public class GenSystemConfig implements Serializable {
 
     public void setDatabaseUrl(String databaseUrl) {
         this.databaseUrl = databaseUrl;
-    }
-
-    public String getDatabaseDriverClassName() {
-        return databaseDriverClassName;
-    }
-
-    public void setDatabaseDriverClassName(String databaseDriverClassName) {
-        this.databaseDriverClassName = databaseDriverClassName;
     }
 
     public String getDatabaseUser() {
