@@ -222,7 +222,7 @@ public class ConfigLoader implements Loader {
                                                                                                                                         datasourceId)
                                                                                 .parallelStream().filter(cg -> {
                         if ("@".equals(cg.getStrategyTmplId())) {
-                            globalColumnDefaultValMap.put(cg.getDatasourceId() + "_" + cg.getColumnName(), transDefaultVal(cg.getDefaultVal()));
+                            globalColumnDefaultValMap.put(KeyGenerator.genColDefaultValKey(cg.getDatasourceId(),cg.getColumnName()), transDefaultVal(cg.getDefaultVal()));
                             return false;
                         }
                         return true;

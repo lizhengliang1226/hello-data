@@ -1,6 +1,6 @@
 generate-datasource:
-  - id: test
-    table-list: a
+  - id: fspt3
+    table-list: DTS_OPT_PERBIZ_DATA
 #  - id: kbssoptsett
 #    table-list: CUST_AUTO_EXE
 #  - id: fspt3

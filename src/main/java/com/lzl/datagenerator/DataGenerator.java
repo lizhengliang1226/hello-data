@@ -3,7 +3,6 @@ package com.lzl.datagenerator;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.util.RandomUtil;
-import cn.hutool.db.DbUtil;
 import cn.hutool.db.Entity;
 import cn.hutool.db.meta.Column;
 import cn.hutool.db.meta.JdbcType;
@@ -13,9 +12,9 @@ import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.TableConfig;
 import com.lzl.datagenerator.loader.ConfigLoader;
 import com.lzl.datagenerator.proxy.ColDataProvider;
+import com.lzl.datagenerator.utils.DbUtils;
 import com.lzl.datagenerator.utils.KeyGenerator;
 
-import javax.sql.DataSource;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.List;
@@ -62,7 +61,7 @@ public class DataGenerator {
             Log.get().info("开始保存表{}数据，预计保存数据{}条.", tableName, dataList.size());
             Lists.partition(dataList, 5000).parallelStream().forEach(list -> {
                 try {
-                    DbUtil.use(configuration.getGlobalDsFactory().getDataSource(datasourceId)).insert(list);
+                    DbUtils.use(datasourceId).insert(list);
                 } catch (SQLException e) {
                     Log.get().error("保存表[{}]数据失败，原因[{}]", tableName, e.getMessage());
                     throw new RuntimeException(e);
@@ -89,7 +88,7 @@ public class DataGenerator {
             return entity;
         }).forEach(e -> {
             try {
-                DbUtil.use(configuration.getGlobalDsFactory().getDataSource(datasourceId)).del(e);
+                DbUtils.use(datasourceId).del(e);
             } catch (Exception ex) {
                 Log.get().error("数据库ID[{}]，表[{}]的数据删除失败，删除主键：{}", datasourceId, tableName, generatePkStr(e, pkInfo));
                 throw new RuntimeException(ex);
@@ -124,8 +123,7 @@ public class DataGenerator {
                                                                                                                                 "delete from " + tableName + " where ",
                                                                                                                                 ""))).toList();
         try {
-            DataSource dataSource = configuration.getGlobalDsFactory().getDataSource(datasourceId);
-            DbUtil.use(dataSource).executeBatch(deleteSqlList);
+            DbUtils.use(datasourceId).executeBatch(deleteSqlList);
         } catch (SQLException e) {
             Log.get().error("数据源[{}]删除数据失败，异常信息：{}", datasourceId, e.getMessage());
             throw new RuntimeException(e);
@@ -161,7 +159,7 @@ public class DataGenerator {
         // 数据生成策略器取值
         Object nextVal = getNextVal(tableConfig.getColDataProvider(), colName);
         // 字段默认值
-        Object colDefaultVal = configuration.getGlobalColumnDefaultValMap().get(colName);
+        Object colDefaultVal = configuration.getGlobalColumnDefaultValMap().get(KeyGenerator.genColDefaultValKey(datasourceId,colName));
         // 取字典值
         Object dictDefaultVal = getDictValByColName(colName, datasourceId);
         // 类型默认值
