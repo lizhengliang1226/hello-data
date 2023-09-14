@@ -9,6 +9,7 @@ import cn.hutool.core.map.SafeConcurrentHashMap;
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
 import cn.hutool.crypto.symmetric.SymmetricCrypto;
 import cn.hutool.db.Db;
+import cn.hutool.db.DbUtil;
 import cn.hutool.db.Entity;
 import cn.hutool.db.ds.DSFactory;
 import cn.hutool.db.meta.*;
@@ -191,10 +192,10 @@ public class ConfigLoader implements Loader {
                              left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? and a.TABLE_CODE = ?
                               and a.COLUMN_NAME in(%s)
                     """;
-            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtils.use(datasourceId).query(String.format(sql,  getColNameListStr(
+            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use().query(String.format(sql, getColNameListStr(
                                                                                                                                   columnsMetaData)),
-                                                                                                                          GenColumnConfigVo.class,
-                                                                                                                          datasourceId, tableCode
+                                                                               GenColumnConfigVo.class,
+                                                                               datasourceId, tableCode
                                                                                                                         )
                                                                   .stream().collect(Collectors.toMap(GenColumnConfigVo::getColumnName, c -> c));
             String sql1 = """
@@ -216,7 +217,7 @@ public class ConfigLoader implements Loader {
                     where a.DATASOURCE_ID = ?
                       and a.COLUMN_NAME in (%s)
                                         """;
-            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtils.use(datasourceId).query(String.format(sql1, getColNameListStr(
+            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use().query(String.format(sql1, getColNameListStr(
                                                                                                                                                 columnsMetaData)),
                                                                                                                                         GenColumnDefaultConfigVo.class,
                                                                                                                                         datasourceId)
