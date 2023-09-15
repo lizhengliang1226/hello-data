@@ -72,8 +72,8 @@
             <groupId>com.oracle.database.jdbc</groupId>
             <artifactId>orai18n</artifactId>
             <version>21.7.0.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/src/main/resources/lib/orai18n.jar</systemPath>
+            <!--<scope>system</scope>-->
+            <!--<systemPath>${project.basedir}/src/main/resources/lib/orai18n.jar</systemPath>-->
         </dependency>
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
