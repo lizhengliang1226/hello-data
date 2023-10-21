@@ -11,10 +11,7 @@ import cn.hutool.db.Db;
 import cn.hutool.db.DbUtil;
 import cn.hutool.db.Entity;
 import cn.hutool.db.ds.DSFactory;
-import cn.hutool.db.meta.Column;
-import cn.hutool.db.meta.ColumnIndexInfo;
-import cn.hutool.db.meta.MetaUtil;
-import cn.hutool.db.meta.Table;
+import cn.hutool.db.meta.*;
 import cn.hutool.json.JSONObject;
 import cn.hutool.log.Log;
 import cn.hutool.setting.Setting;
@@ -22,6 +19,8 @@ import cn.hutool.setting.yaml.YamlUtil;
 import com.lzl.datagenerator.config.CacheManager;
 import com.lzl.datagenerator.config.ColumnConfig;
 import com.lzl.datagenerator.config.TableConfig;
+import com.lzl.datagenerator.entity.GenIgnoreCol;
+import com.lzl.datagenerator.entity.GenJdbcTypeDefaultVal;
 import com.lzl.datagenerator.entity.GenSystemConfig;
 import com.lzl.datagenerator.entity.GenTableConfig;
 import com.lzl.datagenerator.entity.vo.GenColumnConfigVo;
@@ -30,10 +29,13 @@ import com.lzl.datagenerator.proxy.ColDataProvider;
 import com.lzl.datagenerator.proxy.ColDataProviderProxyImpl;
 import com.lzl.datagenerator.strategy.DataStrategy;
 import com.lzl.datagenerator.strategy.DataStrategyFactory;
+import com.lzl.datagenerator.utils.DbUtils;
+import com.lzl.datagenerator.utils.KeyGenerator;
 import lombok.Getter;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -50,17 +52,19 @@ public class ConfigLoader implements Loader {
     private static final String CONFIG_FILE_PATH = "classpath:config/generate.yml";
     private final String DATASOURCE_URL_PROP = "url";
     private final String DATASOURCE_USER_PROP = "username";
+    private final String DATASOURCE_DRIVER_CLASS_NAME_PROP = "driver";
     private final String DATASOURCE_PASSWORD_PROP = "password";
-    public final String DICT_CACHE_PREFIX = "DICT_CACHE";
     private Map<String, List<String>> genConfig;
-    @Getter
-    private DSFactory globalDsFactory;
     private static final byte[] encryptKey = new byte[]{-115, -35, -109, 40, -22, 108, 123, -92, -52, -28, -59, -21, -78, 54, -101, 8};
     private static final SymmetricCrypto AES = new SymmetricCrypto(SymmetricAlgorithm.AES, encryptKey);
     @Getter
     private final Map<String, Object> globalColumnDefaultValMap = new SafeConcurrentHashMap<>();
     @Getter
-    private Map<String, List<TableConfig>> tableConfigMap;
+    private Map<String, List<TableConfig>> tableConfigMap = new HashMap<>();
+    @Getter
+    private Map<JdbcType, Object> jdbcTypeDefaultValMap = new HashMap<>();
+    @Getter
+    private Map<String, List<String>> genIgnoreColMap = new HashMap<>();
 
     @Override
     public void load() {
@@ -68,32 +72,54 @@ public class ConfigLoader implements Loader {
         loadDatabaseConfig();
     }
 
-    public static void main(String[] args) {
-        ConfigLoader configLoader = new ConfigLoader();
-        configLoader.load();
-        configLoader.destory();
-    }
-
     private void readYmlConfig() {
-        genConfig = YamlUtil.loadByPath(CONFIG_FILE_PATH, JSONObject.class)
-                            .getJSONArray("generate-datasource")
-                            .stream()
-                            .map(json -> (JSONObject) json)
-                            .map(j -> Pair.of(j.get("id").toString(), Arrays.asList(String.valueOf(j.get("table-list")).split(","))))
+        genConfig = YamlUtil.loadByPath(CONFIG_FILE_PATH, JSONObject.class).getJSONArray("generate-datasource").stream().map(
+                                    json -> (JSONObject) json).map(j -> Pair.of(j.get("id").toString(), Arrays.asList(String.valueOf(j.get("table-list")).split(","))))
                             .collect(Collectors.toMap(Pair::getKey, Pair::getValue));
     }
 
     @Override
     public void destory() {
-        globalDsFactory.destroy();
+        DbUtils.destroy();
     }
 
     public void loadDatabaseConfig() {
         try {
             loadSystemConfig();
             loadTableConfig();
+            loadJdbcDefaultConfig();
+            loadIgnoreColConfig();
         } catch (SQLException e) {
             Log.get().error("系统配置加载失败！");
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void loadIgnoreColConfig() {
+        try {
+            genIgnoreColMap = Db.use().findAll(Entity.create("GEN_IGNORE_COL"), GenIgnoreCol.class).stream().collect(
+                    Collectors.groupingBy(GenIgnoreCol::getDatasourceId, Collectors.mapping(GenIgnoreCol::getColumnName, Collectors.toList())));
+        } catch (SQLException e) {
+            Log.get().error("加载系统忽略的列配置失败！");
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void loadJdbcDefaultConfig() {
+        try {
+            List<GenJdbcTypeDefaultVal> genJdbcTypeDefaultValList = Db.use().findAll(Entity.create("GEN_JDBC_TYPE_DEFAULT_VAL"),
+                                                                                     GenJdbcTypeDefaultVal.class);
+            jdbcTypeDefaultValMap = genJdbcTypeDefaultValList.stream().map(c -> {
+                try {
+                    JdbcType jdbcType = JdbcType.valueOf(c.getJdbcType());
+                    return Pair.of(jdbcType, transDefaultVal(c.getDefaultVal()));
+                } catch (Exception e) {
+                    Log.get().error("JDBC类型默认值配置错误，[{}]不是一个JDBC类型，请检查！", c.getJdbcType());
+                    throw new RuntimeException(e);
+                }
+            }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
+        } catch (SQLException e) {
+            Log.get().error("JDBC默认值配置加载失败！");
             throw new RuntimeException(e);
         }
     }
@@ -103,16 +129,13 @@ public class ConfigLoader implements Loader {
             String datasourceId = genConfigEntity.getKey();
             List<String> tableCodeList = genConfigEntity.getValue();
             try {
-                List<TableConfig> tableConfigList = Db.use()
-                                                      .findAll(Entity.create("GEN_TABLE_CONFIG")
-                                                                     .set("DATASOURCE_ID", datasourceId)
-                                                                     .set("TABLE_CODE", tableCodeList), GenTableConfig.class)
-                                                      .parallelStream()
+                List<TableConfig> tableConfigList = Db.use().findAll(Entity.create("GEN_TABLE_CONFIG").set("DATASOURCE_ID", datasourceId)
+                                                                           .set("TABLE_CODE", tableCodeList), GenTableConfig.class).parallelStream()
                                                       .map(tc -> {
                                                           Integer genNum = tc.getGenNum();
                                                           String tableCode = tc.getTableCode();
                                                           TableConfig tableConfig = new TableConfig();
-                                                          Table tableMetaInfo = MetaUtil.getTableMeta(globalDsFactory.getDataSource(datasourceId),
+                                                          Table tableMetaInfo = MetaUtil.getTableMeta(DbUtils.getDataSource(datasourceId),
                                                                                                       tableCode);
                                                           // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
                                                           Set<String> uniqueIndexColAndPkSet = getUniqueIndexCol(tableMetaInfo);
@@ -127,8 +150,7 @@ public class ConfigLoader implements Loader {
                                                           tableConfig.setColumns(columnsMetaData);
                                                           tableConfig.setColDataProvider(colDataProviderMap);
                                                           return tableConfig;
-                                                      })
-                                                      .toList();
+                                                      }).toList();
                 return Pair.of(datasourceId, tableConfigList);
             } catch (SQLException e) {
                 Log.get().error("数据源ID[{}]表[{}]数据加载失败", datasourceId, String.join(",", tableCodeList));
@@ -144,12 +166,8 @@ public class ConfigLoader implements Loader {
      * @return 主键和唯一索引列集合
      */
     private Set<String> getUniqueIndexCol(Table tableInfo) {
-        return Stream.concat(tableInfo.getIndexInfoList()
-                                      .parallelStream()
-                                      .filter(index -> !index.isNonUnique())
-                                      .flatMap(index -> index.getColumnIndexInfoList().parallelStream())
-                                      .map(ColumnIndexInfo::getColumnName)
-                                      .collect(Collectors.toSet())
+        return Stream.concat(tableInfo.getIndexInfoList().parallelStream().filter(index -> !index.isNonUnique()).flatMap(
+                                              index -> index.getColumnIndexInfoList().parallelStream()).map(ColumnIndexInfo::getColumnName).collect(Collectors.toSet())
                                       .parallelStream(), tableInfo.getPkNames().parallelStream()).collect(Collectors.toSet());
     }
 
@@ -170,14 +188,15 @@ public class ConfigLoader implements Loader {
                            RANDOM_ELE,
                            DICT_COL_NAME
                     from GEN_COLUMN_CONFIG a
-                             left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? a.TABLE_CODE = ?
-                              and a.COLUMN_NAME in(?)
+                             left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID where a.DATASOURCE_ID=? and a.TABLE_CODE = ?
+                              and a.COLUMN_NAME in(%s)
                     """;
-            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId))
-                                                                  .query(sql, GenColumnConfigVo.class, datasourceId, tableCode,
-                                                                         getColNameListStr(columnsMetaData))
-                                                                  .stream()
-                                                                  .collect(Collectors.toMap(GenColumnConfigVo::getColumnName, c -> c));
+            Map<String, GenColumnConfigVo> colConfigVoMap = DbUtil.use().query(String.format(sql, getColNameListStr(
+                                                                                                                                  columnsMetaData)),
+                                                                               GenColumnConfigVo.class,
+                                                                               datasourceId, tableCode
+                                                                                                                        )
+                                                                  .stream().collect(Collectors.toMap(GenColumnConfigVo::getColumnName, c -> c));
             String sql1 = """
                     select DATASOURCE_ID,
                            COLUMN_NAME,
@@ -195,54 +214,60 @@ public class ConfigLoader implements Loader {
                     from GEN_COLUMN_DEFAULT_CONFIG a
                              left join GEN_STRATEGY_TEMPLATE b on a.STRATEGY_TMPL_ID = b.STRATEGY_TMPL_ID
                     where a.DATASOURCE_ID = ?
-                      and a.COLUMN_NAME in (?)
+                      and a.COLUMN_NAME in (%s)
                                         """;
-            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use(globalDsFactory.getDataSource(datasourceId))
-                                                                                .query(sql, GenColumnDefaultConfigVo.class, datasourceId,
-                                                                                       getColNameListStr(columnsMetaData))
-                                                                                .parallelStream()
-                                                                                .filter(cg -> {
-                                                                                    if (cg.getStrategyTmplId().equals("@")) {
-                                                                                        globalColumnDefaultValMap.put(
-                                                                                                cg.getDatasourceId() + "_" + cg.getColumnName(),
-                                                                                                transDefaultVal(cg));
-                                                                                        return false;
-                                                                                    }
-                                                                                    return true;
-                                                                                })
-                                                                                .collect(Collectors.toMap(c -> c.getColumnName(), c -> c));
+            Map<String, GenColumnDefaultConfigVo> colDefaultConfigVoMap = DbUtil.use().query(String.format(sql1, getColNameListStr(
+                                                                                                                                                columnsMetaData)),
+                                                                                                                                        GenColumnDefaultConfigVo.class,
+                                                                                                                                        datasourceId)
+                                                                                .parallelStream().filter(cg -> {
+                        if ("@".equals(cg.getStrategyTmplId())) {
+                            globalColumnDefaultValMap.put(KeyGenerator.genColDefaultValKey(cg.getDatasourceId(),cg.getColumnName()), transDefaultVal(cg.getDefaultVal()));
+                            return false;
+                        }
+                        return true;
+                    }).collect(Collectors.toMap(GenColumnDefaultConfigVo::getColumnName, c -> c));
 
-            return columnsMetaData.parallelStream()
-                                  .map(column -> {
-                                      ColumnConfig columnConfig = new ColumnConfig();
-                                      String colName = column.getName();
-                                      if (colConfigVoMap.containsKey(colName)) {
-                                          GenColumnConfigVo genColumnConfigVo = colConfigVoMap.get(colName);
-                                          BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
-                                          return columnConfig;
-                                      }
-                                      if (colDefaultConfigVoMap.containsKey(colName)) {
-                                          GenColumnDefaultConfigVo genColumnConfigVo = colDefaultConfigVoMap.get(colName);
-                                          BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
-                                          return columnConfig;
-                                      }
-                                      return null;
-                                  })
-                                  .filter(Objects::nonNull)
-                                  .map(this::createColDataProvider)
-                                  .collect(Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
+            return columnsMetaData.parallelStream().map(column -> {
+                ColumnConfig columnConfig = new ColumnConfig();
+                String colName = column.getName();
+                if (colConfigVoMap.containsKey(colName)) {
+                    GenColumnConfigVo genColumnConfigVo = colConfigVoMap.get(colName);
+                    copyGenColumnConfigVoProperties(columnConfig, genColumnConfigVo);
+                    return columnConfig;
+                }
+                if (colDefaultConfigVoMap.containsKey(colName)) {
+                    GenColumnDefaultConfigVo genColumnConfigVo = colDefaultConfigVoMap.get(colName);
+                    copyGenColumnDefaultConfigVoProperties(columnConfig, genColumnConfigVo);
+                    return columnConfig;
+                }
+                return null;
+            }).filter(Objects::nonNull).map(this::createColDataProvider).collect(
+                    Collectors.toMap(ColDataProvider::getName, colDataProvider -> colDataProvider));
         } catch (SQLException e) {
             Log.get().error("数据源ID[{}]表代码[{}]列配置查询失败！", datasourceId, tableCode);
             throw new RuntimeException(e);
         }
     }
 
-    private String transDefaultVal(GenColumnDefaultConfigVo cg) {
-        return cg.getDefaultVal();
+    private static void copyGenColumnDefaultConfigVoProperties(ColumnConfig columnConfig, GenColumnDefaultConfigVo genColumnConfigVo) {
+        BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
+    }
+
+    private static void copyGenColumnConfigVoProperties(ColumnConfig columnConfig, GenColumnConfigVo genColumnConfigVo) {
+        BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
+    }
+
+
+    private Object transDefaultVal(String defaultValue) {
+        if ("$sysdate".equals(defaultValue)) {
+            return LocalDateTime.now();
+        }
+        return defaultValue;
     }
 
     private String getColNameListStr(Collection<Column> columnsMetaData) {
-        return columnsMetaData.stream().map(column -> "'" + column.getName() + "'").collect(Collectors.joining(","));
+        return columnsMetaData.parallelStream().map(column -> "'" + column.getName() + "'").collect(Collectors.joining(","));
     }
 
     /**
@@ -269,19 +294,19 @@ public class ConfigLoader implements Loader {
     }
 
     private void loadSystemConfig() throws SQLException {
-        List<GenSystemConfig> systemConfigList = Db.use()
-                                                   .findAll(Entity.create("GEN_SYSTEM_CONFIG").set("DATASOURCE_ID", genConfig.keySet()),
-                                                            GenSystemConfig.class);
-        Setting sysSetting = systemConfigList.parallelStream().map(this::decryptSysConfig).reduce(Setting.create(), (setting, sysConfig) -> {
-            Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatasourceId())
-                                        .setByGroup(DATASOURCE_USER_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUser())
-                                        .setByGroup(DATASOURCE_PASSWORD_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabasePassword());
+        List<GenSystemConfig> systemConfigList = Db.use().findAll(Entity.create("GEN_SYSTEM_CONFIG").set("DATASOURCE_ID", genConfig.keySet()),
+                                                                  GenSystemConfig.class);
+        Setting sysSetting = systemConfigList.parallelStream().filter(sys->genConfig.containsKey(sys.getDatasourceId())).map(this::decryptSysConfig).reduce(Setting.create(), (setting, sysConfig) -> {
+            Setting curSetting = setting.setByGroup(DATASOURCE_URL_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUrl()).setByGroup(
+                    DATASOURCE_USER_PROP, sysConfig.getDatasourceId(), sysConfig.getDatabaseUser()).setByGroup(DATASOURCE_PASSWORD_PROP,
+                                                                                                               sysConfig.getDatasourceId(),
+                                                                                                               sysConfig.getDatabasePassword());
             if (sysConfig.getLoadDictCache() == 1) {
                 loadDictCache(sysConfig, curSetting);
             }
             return curSetting;
         }, Setting::addSetting);
-        globalDsFactory = DSFactory.create(sysSetting);
+        DbUtils.setGlobalDsFactory(DSFactory.create(sysSetting));
     }
 
     private GenSystemConfig decryptSysConfig(GenSystemConfig genSystemConfig) {
@@ -298,19 +323,16 @@ public class ConfigLoader implements Loader {
     private void loadDictCache(GenSystemConfig sysConfig, Setting curSetting) {
         DSFactory dsFactory = DSFactory.create(curSetting);
         DataSource dataSource = dsFactory.getDataSource(sysConfig.getDatasourceId());
-        Map<Object, List<Object>> dictCache = null;
+        Map<Object, List<Object>> dictCache;
         try {
-            dictCache = Db.use(sysConfig.getDatasourceId())
-                          .findAll(sysConfig.getDictTableName())
-                          .stream()
-                          .collect(Collectors.groupingBy(entity -> entity.get(sysConfig.getDictCodeColName()),
-                                                         Collectors.mapping(entity -> entity.get(sysConfig.getDictItemColName()),
-                                                                            Collectors.toList())));
+            dictCache = Db.use(dataSource).findAll(sysConfig.getDictTableName()).parallelStream().collect(
+                    Collectors.groupingBy(entity -> entity.get(sysConfig.getDictCodeColName()),
+                                          Collectors.mapping(entity -> entity.get(sysConfig.getDictItemColName()), Collectors.toList())));
         } catch (SQLException e) {
             Log.get().error("数据源ID[{}]的字典缓存加载失败，异常信息：{}", sysConfig.getDatasourceId(), e.getMessage());
             throw new RuntimeException(e);
         }
-        CacheManager.getInstance().put(DICT_CACHE_PREFIX + "_" + sysConfig.getDatasourceId(), dictCache);
+        CacheManager.getInstance().put(KeyGenerator.genDictCacheKey(sysConfig.getDatasourceId()), dictCache);
         dsFactory.destroy();
     }
 }
