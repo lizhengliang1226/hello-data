@@ -3,7 +3,6 @@ package com.lzl.datagenerator.loader;
 
 import cn.hutool.aop.ProxyUtil;
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.map.SafeConcurrentHashMap;
 import cn.hutool.crypto.symmetric.SymmetricAlgorithm;
@@ -252,33 +251,13 @@ public class ConfigLoader implements Loader {
     }
 
     private static void copyGenColumnDefaultConfigVoProperties(ColumnConfig columnConfig, GenColumnDefaultConfigVo genColumnConfigVo) {
-        BeanUtil.copyProperties(genColumnConfigVo, columnConfig, CopyOptions.create().setFieldValueEditor((fieldName, val) -> {
-            List<String> val1 = randomEleFieldTrans(fieldName, val);
-            if (val1 != null) {
-                return val1;
-            }
-            return val;
-        }));
+        BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
     }
 
     private static void copyGenColumnConfigVoProperties(ColumnConfig columnConfig, GenColumnConfigVo genColumnConfigVo) {
-        BeanUtil.copyProperties(genColumnConfigVo, columnConfig, CopyOptions.create().setFieldValueEditor((fieldName, val) -> {
-            List<String> val1 = randomEleFieldTrans(fieldName, val);
-            if (val1 != null) {
-                return val1;
-            }
-            return val;
-        }));
+        BeanUtil.copyProperties(genColumnConfigVo, columnConfig);
     }
 
-    private static List<String> randomEleFieldTrans(String fieldName, Object val) {
-        if ("randomEle".equals(fieldName)) {
-            if (val != null && !"".equals(val.toString())) {
-                return Arrays.asList(val.toString().split(","));
-            }
-        }
-        return null;
-    }
 
     private Object transDefaultVal(String defaultValue) {
         if ("$sysdate".equals(defaultValue)) {
@@ -327,7 +306,7 @@ public class ConfigLoader implements Loader {
             }
             return curSetting;
         }, Setting::addSetting);
-        DbUtils.setGlobalDsFactory( DSFactory.create(sysSetting));
+        DbUtils.setGlobalDsFactory(DSFactory.create(sysSetting));
     }
 
     private GenSystemConfig decryptSysConfig(GenSystemConfig genSystemConfig) {
