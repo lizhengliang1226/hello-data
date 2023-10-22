@@ -1,5 +1,8 @@
 package com.lzl.datagenerator.entity;
 
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+
 import java.io.Serializable;
 
 /**
@@ -8,11 +11,13 @@ import java.io.Serializable;
  * @author makejava
  * @since 2023-08-30 23:25:20
  */
+@TableName
 public class GenStrategyTemplate implements Serializable {
     private static final long serialVersionUID = -46524329231763615L;
     /**
      * 策略模板ID，当为@时无意义
      */
+    @TableId
     private String strategyTmplId;
     /**
      * 策略代码

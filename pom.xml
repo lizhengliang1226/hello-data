@@ -1,7 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.0.5</version>
+    </parent>
     <groupId>com.lzl</groupId>
     <artifactId>hello-data</artifactId>
     <version>1.0-SNAPSHOT</version>
@@ -18,6 +22,16 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+        <!--mybatis-plus依赖-->
+        <dependency>
+            <groupId>com.baomidou</groupId>
+            <artifactId>mybatis-plus-boot-starter</artifactId>
+            <version>3.5.3.1</version>
+        </dependency>
         <!--       lombok依赖-->
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -96,6 +110,7 @@
             <resource>
                 <directory>src/main/resources</directory>
                 <includes>
+                    <include>META-INF/**/*</include>
                     <include>bin/**/*</include>
                     <include>config/**/*.yml</include>
                     <include>config/**/*.setting</include>
