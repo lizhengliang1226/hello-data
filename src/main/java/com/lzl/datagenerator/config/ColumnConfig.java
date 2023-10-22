@@ -20,7 +20,7 @@ public class ColumnConfig implements Serializable {
     private String querySql;
     private String queryCol;
     private String dictColName;
-    private String dataSourceId;
+    private String datasourceId;
     private String prefix;
     private String suffix;
     private long step;

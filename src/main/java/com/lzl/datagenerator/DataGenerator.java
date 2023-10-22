@@ -109,19 +109,11 @@ public class DataGenerator {
      */
     private void deleteByBatchSql(String datasourceId, List<Entity> dataList, String tableName, Set<String> pkInfo) {
         List<String> deleteSqlList = Lists.partition(dataList, 10).parallelStream().map(list -> list.parallelStream().flatMap(
-                                                                                                            data -> pkInfo.parallelStream().map(pk -> Pair.of(pk, "'" + data.get(pk) + "'")).toList().stream()).collect(
-                                                                                                            Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList()))).entrySet().parallelStream()
-                                                                                                    .map(pkDataMap -> pkDataMap.getValue()
-                                                                                                                               .parallelStream()
-                                                                                                                               .map(String::valueOf)
-                                                                                                                               .collect(
-                                                                                                                                       Collectors.joining(
-                                                                                                                                               ",",
-                                                                                                                                               pkDataMap.getKey() + " in (",
-                                                                                                                                               ")")))
-                                                                                                    .collect(Collectors.joining(" and ",
-                                                                                                                                "delete from " + tableName + " where ",
-                                                                                                                                ""))).toList();
+                        data -> pkInfo.parallelStream().map(pk -> Pair.of(pk, "'" + data.get(pk) + "'")).toList().stream()).collect(
+                        Collectors.groupingBy(Pair::getKey, Collectors.mapping(Pair::getValue, Collectors.toList()))).entrySet().parallelStream()
+                .map(pkDataMap -> pkDataMap.getValue().parallelStream().map(String::valueOf)
+                        .collect(Collectors.joining(",", pkDataMap.getKey() + " in (", ")")))
+                .collect(Collectors.joining(" and ", "delete from " + tableName + " where ", ""))).toList();
         try {
             DbUtils.use(datasourceId).executeBatch(deleteSqlList);
         } catch (SQLException e) {
@@ -140,8 +132,8 @@ public class DataGenerator {
         Collection<Column> columnMetaInfoList = tableConfig.getColumns();
         // 唯一索引和主键去重后的列名集合，包含在里面的就要自己定义生成器生产数据
         List<Entity> res = LongStream.range(0L, tableConfig.getGenNum()).parallel().mapToObj(index -> Entity.create(tableCode)).peek(
-                                             dataEntity -> columnMetaInfoList.forEach(column -> setColumnValue(tableConfig, tableConfig.getPkInfo(), dataEntity, column)))
-                                     .toList();
+                        dataEntity -> columnMetaInfoList.forEach(column -> setColumnValue(tableConfig, tableConfig.getPkInfo(), dataEntity, column)))
+                .toList();
         return Pair.of(tableConfig, res);
     }
 
@@ -159,7 +151,7 @@ public class DataGenerator {
         // 数据生成策略器取值
         Object nextVal = getNextVal(tableConfig.getColDataProvider(), colName);
         // 字段默认值
-        Object colDefaultVal = configuration.getGlobalColumnDefaultValMap().get(KeyGenerator.genColDefaultValKey(datasourceId,colName));
+        Object colDefaultVal = configuration.getGlobalColumnDefaultValMap().get(KeyGenerator.genColDefaultValKey(datasourceId, colName));
         // 取字典值
         Object dictDefaultVal = getDictValByColName(colName, datasourceId);
         // 类型默认值

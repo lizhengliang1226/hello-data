@@ -50,7 +50,7 @@ public class DataStrategyFactory {
             return constructor.newInstance(columnConfig);
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
             Log.get()
-               .error("创建数据源[{}]-列名[{}]-策略名[{}]的数据生成器时发生了异常，异常信息：", columnConfig.getDataSourceId(),
+               .error("创建数据源[{}]-列名[{}]-策略名[{}]的数据生成器时发生了异常，异常信息：", columnConfig.getDatasourceId(),
                       columnConfig.getColumnName(), columnConfig.getStrategyCode());
             throw new RuntimeException(e);
         }

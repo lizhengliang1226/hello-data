@@ -48,7 +48,7 @@ public class DataConfigBean {
                     return Arrays.stream(colName.split(",")).flatMap(col -> {
                         ColumnConfig clone = ObjectUtil.clone(columnConfig);
                         clone.setColumnName(col);
-                        clone.setDataSourceId(dataSourceId);
+                        clone.setDatasourceId(dataSourceId);
                         return Stream.of(Pair.of(col, clone));
                     });
                 }).collect(Collectors.toMap(Pair::getKey, Pair::getValue));
