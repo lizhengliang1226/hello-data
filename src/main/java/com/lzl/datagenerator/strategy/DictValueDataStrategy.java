@@ -47,7 +47,7 @@ public  class DictValueDataStrategy implements DataStrategy {
     public DictValueDataStrategy(ColumnConfig columnConfig) {
         this.colName = columnConfig.getColumnName();
         this.dictColName = columnConfig.getDictColName();
-        this.dataSourceId = columnConfig.getDataSourceId();
+        this.dataSourceId = columnConfig.getDatasourceId();
     }
 
     public DictValueDataStrategy() {

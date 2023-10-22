@@ -46,7 +46,7 @@ public  class RandomTableEleDataStrategy implements DataStrategy {
     }
 
     public RandomTableEleDataStrategy(ColumnConfig columnConfig) {
-        dataSourceId = columnConfig.getDataSourceId();
+        dataSourceId = columnConfig.getDatasourceId();
         querySql = columnConfig.getQuerySql();
         queryCol = columnConfig.getQueryCol();
     }
